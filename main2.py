@@ -33,10 +33,11 @@ creds = df[['ign']]
 n = len(creds)
 
 #flags
-oldman = True
+oldman = False
 dimensinal_trials = False
 crew_donations = True
 crew_missions = True
+login_rewards = True
 
 # ============ Window Functions ============
 
@@ -79,7 +80,10 @@ def dimensional_trials_update(i,value, col=5):
 def oldman_update(i,value, col=6):
     sheet.Cells(i+2, col).Value = value
 
-def debug_update(i,value, col=7):
+def supply_run_update(i,value, col=7):
+    sheet.Cells(i+2, col).Value = value
+
+def debug_update(i,value, col=8):
     sheet.Cells(i+2, col).Value = value
 
 # ============ Screenshot & Detection ============
@@ -182,6 +186,7 @@ if __name__ == '__main__':
         creds['weekly missions left'] = ""
         creds['dimensional trials'] = ""
         creds['oldman'] = ""
+        creds['supply run'] = ""
         creds['debug'] = ""
 
         for col_num, column_name in enumerate(creds.columns, start=1):
@@ -278,6 +283,11 @@ if __name__ == '__main__':
 
     pass_cancel = readImg('pass_cancel')
 
+    special_operation = readImg('special_operation')
+    supply_run = readImg('supply_run')
+    supply_claim = readImg('supply_claim')
+    all_rewards_collected = readImg('all_rewards_collected')
+
 
 
 
@@ -290,6 +300,9 @@ if __name__ == '__main__':
             print("Clicking other_login")
             findClick(other_login)
 
+            if findWait(other_login, threshold=0.9, max_tries=2) == 'FOUND':
+                findClick(other_login, threshold=0.9, max_tries=2)
+
             print("Clicking email_signin")
             findClick(email_signin)
 
@@ -299,6 +312,10 @@ if __name__ == '__main__':
 
             print("Clicking next_step")
             findClick(next_step)
+            while findWait(next_step, threshold=0.9, max_tries=2) == 'FOUND':
+                print("Clicking next_step again")
+                findClick(next_step, threshold=0.9, max_tries=2)
+                sleep(1)
             sleep(1)
 
             print(f"Typing password for index {i}")
@@ -310,6 +327,7 @@ if __name__ == '__main__':
             debug_update(i, 'Server Selection')
             print("Clicking server_green_button")
             findClick(server_green_button)
+            sleep(4.0)
 
             print("Clicking server_aestral_noa")
             findClick(server_aestral_noa,threshold=0.9,max_tries=5)
@@ -333,14 +351,47 @@ if __name__ == '__main__':
             print("Cancelling pass window, if exists")
             findClick(pass_cancel,max_tries=2)
 
+            if login_rewards:
+                print("Objective: Supply Run")
+                debug_update(i, 'Supply Run')
+
+                print("Cliclinng Gift Box Icon")
+                pyautogui.keyDown('alt')
+                pyautogui.press('1')
+                pyautogui.keyUp('alt')
+
+                print("Clicking special_operation")
+                findClick(special_operation)
+                
+                print("Clicking supply_run")
+                findClick(supply_run)
+            
+                print("Clicking supply_claim")
+                findClick(supply_claim, max_tries=5)
+
+                print("Waiting for all_rewards_collected")
+                if findWait(all_rewards_collected, max_tries=5) == 'FOUND':
+                    print("All rewards collected")
+                    supply_run_update(i, 'Completed')
+                else:
+                    print("Not all rewards collected")
+                    supply_run_update(i, 'Not Completed')
+                
+                print("Clicking back_button")
+                findClick(back_button, max_tries=2,threshold=0.75)
+
             if oldman:
                 print("Objective: Oldman")
                 debug_update(i, 'Checking Oldman')
             #while findWait(sword_icon,threshold=0.8) == 'FOUND':
-                pyautogui.middleClick()
-                pyautogui.press('enter')
+                # pyautogui.middleClick()
+                # pyautogui.press('enter')
                 print("Clicking sword_icon")
-                findClick(sword_icon,threshold=0.75)
+                pyautogui.keyDown('alt')
+                pyautogui.press('3')
+                pyautogui.keyUp('alt')
+                # pyautogui.hotkey('alt', '3')
+                # findClick(sword_icon,threshold=0.75)
 
                 print("Clicking casual_tab")
                 findClick(casual_tab)
@@ -349,7 +400,7 @@ if __name__ == '__main__':
                 findClick(artificial_island_icon)
 
                 print("Waiting for oldman_icon")
-                findWait(oldman_icon,max_tries=5)
+                findWait(oldman_icon,max_tries=3)
 
                 print("Waiting for oldman_icon (status check)")
                 oldman_status_ = findWait(oldman_icon, max_tries=2)
@@ -357,11 +408,13 @@ if __name__ == '__main__':
                 oldman_update(i, oldman_status_)
 
                 print("Clicking back_button")
-                findClick(back_button)
+                findClick(back_button,threshold=0.75)
 
                 print("Clicking back_button again")
                 findClick(back_button,threshold=0.75)
                 sleep(1)
+
+                pyautogui.press('enter')
             
             # if dimensinal_trials:
             #     print("Objective: Dimensional Trials")
@@ -372,6 +425,10 @@ if __name__ == '__main__':
 
 
             #     print("Clicking sword_icon")
+            #     pyautogui.hotkey('alt', '3')
+                # pyautogui.keyDown('alt')
+                # pyautogui.press('3')
+                # pyautogui.keyUp('alt')
             #     findClick(sword_icon,threshold=0.75)
 
             #     print("Clicking recommended_button")
@@ -406,7 +463,7 @@ if __name__ == '__main__':
             #     findClick(cross_button,threshold=0.8)
 
             #     print("Clicking back button")
-            #     findClick(back_button)
+            #     findClick(back_button,threshold=0.75)
 
             if crew_donations:
                 print("Objective: Crew Donations")
@@ -414,7 +471,7 @@ if __name__ == '__main__':
                 pyautogui.press('enter')
                     
                 print("Clicking esc_button")
-                findClick(esc_button)   
+                findClick(esc_button,threshold=0.75)   
 
                 print("Clicking crew button")
                 findClick(crew_icon)
@@ -434,8 +491,8 @@ if __name__ == '__main__':
                         findClick(accept_button,max_tries=2)
                         findClick(accept_button,max_tries=2)
 
-                    # while findWait(submit_button,max_tries=2) == 'FOUND':
-                    #     findClick(submit_button,max_tries=2)
+                    while findWait(submit_button,max_tries=2) == 'FOUND':
+                        findClick(submit_button,max_tries=2)
                     debug_update(i, 'Checking Crew Missions')
                     print("Looking for vitality missions")
                     if findWait(vitality_mission_text,max_tries=1) == 'FOUND':
@@ -456,13 +513,13 @@ if __name__ == '__main__':
                         mia_kitchen_mission = False
 
                     print("Clicking back button")
-                    findClick(back_button,max_tries=2)
+                    findClick(back_button,max_tries=2,threshold=0.75)
 
                     print("Clicking cross button")
                     findClick(cross_button,threshold=0.8,max_tries=2)
 
-                    if bygone_mission:
-                    # if False:
+                    # if bygone_mission:
+                    if False:
                         print("Objective: Bygone Phantasm")
                         debug_update(i, 'Bygone Mission')
                         pyautogui.middleClick()
@@ -470,7 +527,11 @@ if __name__ == '__main__':
                         pyautogui.press('enter')
 
                         print("Clicking sword_icon")
-                        findClick(sword_icon,threshold=0.75)
+                        pyautogui.keyDown('alt')
+                        pyautogui.press('3')
+                        pyautogui.keyUp('alt')
+                        # pyautogui.hotkey('alt', '3')
+                        # findClick(sword_icon,threshold=0.75)
 
                         print("Clicking challenge_button")
                         findClick(challenge_button)
@@ -520,14 +581,19 @@ if __name__ == '__main__':
                     pyautogui.press('enter')
 
                     print("Clicking sword_icon")
-                    findClick(sword_icon,threshold=0.75)
+                    # pyautogui.hotkey('alt', '3')
+                    pyautogui.keyDown('alt')
+                    pyautogui.press('3')
+                    pyautogui.keyUp('alt')
+                    # findClick(sword_icon,threshold=0.75)
 
                     print("Clicking recommended_button")
                     findClick(recommended_button,threshold=0.75)
                 
 
                     # if mia_kitchen_mission:
-                    if True:
+                    # if True:
+                    if False:
                         print("Objective: Mia's Kitchen")
                         debug_update(i, 'Mia Kitchen Mission')
 
@@ -541,14 +607,14 @@ if __name__ == '__main__':
                             findClick(taste_button)
 
                             print("Clicking back_button")
-                            findClick(back_button)
+                            findClick(back_button,threshold=0.75)
                             sleep(2)
 
                             findWait(congratulations_text)
                             findClick(anywhere_text)
 
-                    # if vitality_mission:
-                    if True:
+                    if vitality_mission:
+                    # if True:
                         print("Vitality mission active")
                         debug_update(i, 'Vitality Mission')
                         print("Clicking dimensinal_trials_button")
@@ -580,23 +646,23 @@ if __name__ == '__main__':
                         findClick(cross_button,threshold=0.8)
 
                         print("Clicking back_button")
-                        findClick(back_button)
+                        findClick(back_button,threshold=0.75)
 
                     print("Clicking back_button")
-                    findClick(back_button,max_tries=2)
+                    findClick(back_button,max_tries=2,threshold=0.75)
 
                     print("Pressing Enter")
                     pyautogui.press('enter')
 
                     print("Clicking esc_button")
-                    findClick(esc_button,max_tries=2)
+                    findClick(esc_button,max_tries=2,threshold=0.75)
 
                     print("Clicking crew_icon")
                     findClick(crew_icon,max_tries=2)
 
                                 
-                    # while findWait(submit_button,max_tries=2) == 'FOUND':
-                    #     findClick(submit_button,max_tries=5)
+                    while findWait(submit_button,max_tries=2) == 'FOUND':
+                        findClick(submit_button,max_tries=5)
 
                     if findWait(abandon_button,max_tries=2) == 'FOUND':
                         mission_remaining = 'Yes'
@@ -627,12 +693,12 @@ if __name__ == '__main__':
                 findClick(ok_button,max_tries=2)
 
                 print("Clicking back button")
-                findClick(back_button)
+                findClick(back_button,threshold=0.75)
 
         #while findWait(esc_button) == 'FOUND':
             if crew_donations == False:
                 print("Clicking esc_button")
-                findClick(esc_button)   
+                findClick(esc_button,threshold=0.75)   
 
             print("Clicking settings_button")
             findClick(settings_button)
@@ -659,6 +725,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('Interrupt signal detected!')
         workbook.Save()
+        #os.system("shutdown /s /t 1")
         #excel.Visible = True
         
 
