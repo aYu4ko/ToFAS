@@ -157,6 +157,18 @@ def findElement(
     if type(img_list) is not list:
         img_list = [img_list]
 
+    # Convert enum members to their values if needed
+    processed_img_list = []
+    for img in img_list:
+        if hasattr(img, "value"):
+            # If it's an enum member, get its value
+            processed_img_list.append(img.value)
+        else:
+            # If it's already a value, use it as is
+            processed_img_list.append(img)
+
+    img_list = processed_img_list
+
     while max_val <= threshold:
         takeScreenshot(window_size, temp_img_name)
         ss_img = cv2.imread(temp_img_name, cv2.IMREAD_COLOR)
@@ -301,29 +313,23 @@ if __name__ == "__main__":
             pyautogui.PAUSE = 1.0  # 1.0 #0.5
 
             print("Clicking other_login")
-            findClick(Template.OTHER_LOGIN.value)
+            findClick(Template.OTHER_LOGIN)
 
-            if (
-                findWait(Template.OTHER_LOGIN.value, threshold=0.9, max_tries=2)
-                == "FOUND"
-            ):
-                findClick(Template.OTHER_LOGIN.value, threshold=0.9, max_tries=2)
+            if findWait(Template.OTHER_LOGIN, threshold=0.9, max_tries=2) == "FOUND":
+                findClick(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
 
             print("Clicking email_signin")
-            findClick(Template.EMAIL_SIGNIN.value)
+            findClick(Template.EMAIL_SIGNIN)
 
             debug_update(i, "Logging")
             print(f"Typing email for index {i}")
             pyautogui.write(df.email[i])
 
             print("Clicking next_step")
-            findClick(Template.NEXT_STEP.value)
-            while (
-                findWait(Template.NEXT_STEP.value, threshold=0.9, max_tries=2)
-                == "FOUND"
-            ):
+            findClick(Template.NEXT_STEP)
+            while findWait(Template.NEXT_STEP, threshold=0.9, max_tries=2) == "FOUND":
                 print("Clicking next_step again")
-                findClick(Template.NEXT_STEP.value, threshold=0.9, max_tries=2)
+                findClick(Template.NEXT_STEP, threshold=0.9, max_tries=2)
                 sleep(1)
             sleep(2)
 
@@ -331,43 +337,43 @@ if __name__ == "__main__":
             pyautogui.write(df.password[i])
 
             print("Clicking login")
-            findClick(Template.LOGIN.value)
+            findClick(Template.LOGIN)
             sleep(1.0)
 
-            findClick(Template.ENTER.value)
+            findClick(Template.ENTER)
 
             debug_update(i, "Server Selection")
             print("Clicking server_green_button")
-            findClick(Template.SERVER_GREEN_BUTTON.value)
+            findClick(Template.SERVER_GREEN_BUTTON)
 
             print("Clicking server_aestral_noa")
             findClick(
-                [Template.SERVER_AESTRAL_NOA.value, Template.SERVER_ANIMUS.value],
+                [Template.SERVER_AESTRAL_NOA, Template.SERVER_ANIMUS],
                 threshold=0.9,
                 max_tries=5,
             )
 
             print("Clicking enter")
-            findClick(Template.ENTER.value)
+            findClick(Template.ENTER)
 
             debug_update(i, "Entering Game")
             print("Waiting for origin_reso to appear")
-            findWait(Template.ORIGIN_RESO.value, max_tries=5)
+            findWait(Template.ORIGIN_RESO, max_tries=5)
 
             print("Waiting for origin_reso to disappear")
-            findWait(Template.ORIGIN_RESO.value, invert_threshold=True, max_tries=50)
+            findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
             sleep(7)
 
             debug_update(i, "Entered Game")
             print("Clicking uid_text")
-            findClick(Template.UID_TEXT.value, max_tries=10)
+            findClick(Template.UID_TEXT, max_tries=10)
             sleep(0.5)
 
             print("Cancelling pass window, if exists")
-            findClick(Template.PASS_CANCEL.value, max_tries=2)
+            findClick(Template.PASS_CANCEL, max_tries=2)
 
             print("Clicking anywhere text")
-            findClick(Template.ANYWHERE_TEXT.value, max_tries=2)
+            findClick(Template.ANYWHERE_TEXT, max_tries=2)
 
             # pyautogui.press('tab') #Secret
 
@@ -381,23 +387,20 @@ if __name__ == "__main__":
                 pyautogui.keyUp("alt")
 
                 print("Clicking special_operation")
-                findClick(Template.SPECIAL_OPERATION.value)
+                findClick(Template.SPECIAL_OPERATION)
 
                 print("Clicking summer_welfare")
-                findClick(Template.SUMMER_WELFARE.value)
+                findClick(Template.SUMMER_WELFARE)
 
                 # print("Clicking supply_run")
-                # findClick(Template.SUPPLY_RUN.value)
+                # findClick(Template.SUPPLY_RUN)
 
                 print("Clicking supply_claim")
-                findClick(Template.SUPPLY_CLAIM.value, max_tries=2)
-                findClick(Template.FINAL_SUPPLY_CLAIM.value, max_tries=2)
+                findClick(Template.SUPPLY_CLAIM, max_tries=2)
+                findClick(Template.FINAL_SUPPLY_CLAIM, max_tries=2)
 
                 print("Waiting for all_rewards_collected")
-                if (
-                    findWait(Template.ALL_REWARDS_COLLECTED.value, max_tries=2)
-                    == "FOUND"
-                ):
+                if findWait(Template.ALL_REWARDS_COLLECTED, max_tries=2) == "FOUND":
                     print("All rewards collected")
                     supply_run_update(i, "Completed")
                 else:
@@ -420,7 +423,7 @@ if __name__ == "__main__":
                 #     supply_run_2_update(i, 'Not Completed')
 
                 print("Clicking back_button")
-                findClick(Template.BACK_BUTTON.value, max_tries=2, threshold=0.75)
+                findClick(Template.BACK_BUTTON, max_tries=2, threshold=0.75)
 
             if OLDMAN:
                 print("Objective: Oldman")
@@ -431,27 +434,27 @@ if __name__ == "__main__":
                 pyautogui.press("3")
                 pyautogui.keyUp("alt")
                 # pyautogui.hotkey('alt', '3')
-                # findClick(Template.SWORD_ICON.value,threshold=0.75)
+                # findClick(Template.SWORD_ICON,threshold=0.75)
 
                 print("Clicking casual_tab")
-                findClick(Template.CASUAL_TAB.value)
+                findClick(Template.CASUAL_TAB)
 
                 print("Clicking artificial_island_icon")
-                findClick(Template.ARTIFICIAL_ISLAND_ICON.value)
+                findClick(Template.ARTIFICIAL_ISLAND_ICON)
 
                 print("Waiting for oldman_icon")
-                findWait(Template.OLDMAN_ICON.value, max_tries=3)
+                findWait(Template.OLDMAN_ICON, max_tries=3)
 
                 print("Waiting for oldman_icon (status check)")
-                oldman_status_ = findWait(Template.OLDMAN_ICON.value, max_tries=2)
+                oldman_status_ = findWait(Template.OLDMAN_ICON, max_tries=2)
                 print("DEBUG: oldman", oldman_status_)
                 oldman_update(i, oldman_status_)
 
                 print("Clicking back_button")
-                findClick(Template.BACK_BUTTON.value, threshold=0.75)
+                findClick(Template.BACK_BUTTON, threshold=0.75)
 
                 print("Clicking back_button again")
-                findClick(Template.BACK_BUTTON.value, threshold=0.75)
+                findClick(Template.BACK_BUTTON, threshold=0.75)
                 sleep(1)
 
             if BYGONE_MISSION:
@@ -464,54 +467,52 @@ if __name__ == "__main__":
                 pyautogui.press("3")
                 pyautogui.keyUp("alt")
                 # pyautogui.hotkey('alt', '3')
-                # findClick(Template.SWORD_ICON.value,threshold=0.75)
+                # findClick(Template.SWORD_ICON,threshold=0.75)
 
                 print("Clicking challenge_button")
-                findClick(Template.CHALLENGE_BUTTON.value)
+                findClick(Template.CHALLENGE_BUTTON)
 
                 print("Clicking bygone_icon")
-                findClick(Template.BYGONE_ICON.value)
+                findClick(Template.BYGONE_ICON)
 
                 print("Clicking sneak level_button")
-                findClick(Template.SNEAK_LEVEL_BUTTON.value, threshold=0.7)
+                findClick(Template.SNEAK_LEVEL_BUTTON, threshold=0.7)
 
                 print("Waiting for initiating_transmission to appear")
-                findWait(Template.INITIATING_TRANSMISSION.value)
+                findWait(Template.INITIATING_TRANSMISSION)
 
                 print("Waiting for initiating_transmission to disappear")
                 findWait(
-                    Template.INITIATING_TRANSMISSION.value,
+                    Template.INITIATING_TRANSMISSION,
                     invert_threshold=True,
                     max_tries=50,
                 )
 
                 print("Waiting for origin_reso to appear")
-                findWait(Template.ORIGIN_RESO.value, max_tries=5)
+                findWait(Template.ORIGIN_RESO, max_tries=5)
 
                 print("Waiting for origin_reso to disappear")
-                findWait(
-                    Template.ORIGIN_RESO.value, invert_threshold=True, max_tries=50
-                )
+                findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
 
                 print("Clicking skip_button")
-                findClick(Template.SKIP_BUTTON.value, max_tries=10)
+                findClick(Template.SKIP_BUTTON, max_tries=10)
 
                 print("Waiting for exit_button to appear")
-                findWait(Template.EXIT_BUTTON.value)
+                findWait(Template.EXIT_BUTTON)
 
                 print("Pressing ESC key")
                 pyautogui.press("esc")
 
                 print("Clicking exit_button")
-                findClick(Template.EXIT_BUTTON.value)
+                findClick(Template.EXIT_BUTTON)
 
                 print("Clicking ok_button")
-                findClick(Template.OK_BUTTON.value)
+                findClick(Template.OK_BUTTON)
 
                 print("Sleeping for 7 seconds")
                 sleep(7)
 
-                findWait(Template.UID_TEXT.value)
+                findWait(Template.UID_TEXT)
                 sleep(1)
 
             # findWait(sword_icon,threshold=0.75)
@@ -525,22 +526,22 @@ if __name__ == "__main__":
                 pyautogui.keyUp("alt")
 
                 print("Clicking rewards button")
-                findClick(Template.REWARDS_BUTTON.value)
+                findClick(Template.REWARDS_BUTTON)
 
                 print("Clicking exchange button")
-                findClick(Template.EXCHANGE_BUTTON.value)
+                findClick(Template.EXCHANGE_BUTTON)
 
                 print("Clicking gift code block")
-                findClick(Template.GIFT_CODE_BLOCK.value)
+                findClick(Template.GIFT_CODE_BLOCK)
 
                 print("Writing redeem code")
                 pyautogui.write(redeem_code)
 
                 print("Clicking confirm button")
-                findClick(Template.CONFIRM_BUTTON.value)
+                findClick(Template.CONFIRM_BUTTON)
 
                 print("Clicking back button")
-                findClick(Template.BACK_BUTTON.value)
+                findClick(Template.BACK_BUTTON)
 
             if MIA_KITCHEN_MISSION:
                 print("Objective: Mia's Kitchen")
@@ -552,32 +553,32 @@ if __name__ == "__main__":
                 pyautogui.keyUp("alt")
 
                 print("Clicking recommended button")
-                findClick(Template.RECOMMENDED_BUTTON.value)
+                findClick(Template.RECOMMENDED_BUTTON)
 
                 print("Waiting for mia_kitchen_done_icon")
-                while findWait(Template.MIA_KITCHEN_ICON.value, max_tries=2) == "FOUND":
+                while findWait(Template.MIA_KITCHEN_ICON, max_tries=2) == "FOUND":
                     print("mia_kitchen_done_icon not found, retrying...")
                     print("Clicking mia_kitchen_icon")
-                    findClick(Template.MIA_KITCHEN_ICON.value)
+                    findClick(Template.MIA_KITCHEN_ICON)
 
                     print("Clicking taste_button")
-                    findClick(Template.TASTE_BUTTON.value)
+                    findClick(Template.TASTE_BUTTON)
 
                     print("Clicking back_button")
-                    findClick(Template.BACK_BUTTON.value, threshold=0.75)
+                    findClick(Template.BACK_BUTTON, threshold=0.75)
                     sleep(2)
 
-                    findWait(Template.CONGRATULATIONS_TEXT.value)
-                    findClick(Template.ANYWHERE_TEXT.value)
+                    findWait(Template.CONGRATULATIONS_TEXT)
+                    findClick(Template.ANYWHERE_TEXT)
 
                 print("Clicking back_button")
-                findClick(Template.BACK_BUTTON.value, threshold=0.75)
+                findClick(Template.BACK_BUTTON, threshold=0.75)
 
             if CLAIM_MAIL:
                 debug_update(i, "claim mail")
 
                 print("Closing chat")
-                findClick(Template.CHAT_CLOSE_BUTTON.value, max_tries=2)
+                findClick(Template.CHAT_CLOSE_BUTTON, max_tries=2)
                 sleep(0.5)
 
                 print("Press Escape key")
@@ -585,26 +586,26 @@ if __name__ == "__main__":
 
                 print("Clicking mail icon")
                 findClick(
-                    [Template.MAIL_ICON.value, Template.MAIL_ICON2.value],
+                    [Template.MAIL_ICON, Template.MAIL_ICON2],
                     threshold=0.75,
                 )
 
                 print("Clicking claim all button")
-                findClick(Template.CLAIM_ALL_BUTTON.value)
+                findClick(Template.CLAIM_ALL_BUTTON)
 
                 sleep(1.0)  # safer with delay
 
                 print("Click anywhere text")
-                findClick(Template.ANYWHERE_TEXT.value, max_tries=2)
+                findClick(Template.ANYWHERE_TEXT, max_tries=2)
 
                 print("Clicking delete all button")
-                findClick(Template.DELETE_ALL_BUTTON.value)
+                findClick(Template.DELETE_ALL_BUTTON)
 
                 print("Clicking OK button")
-                findClick(Template.OK_BUTTON.value, max_tries=2)
+                findClick(Template.OK_BUTTON, max_tries=2)
 
                 print("Clicking back button")
-                findClick(Template.BACK_BUTTON.value)
+                findClick(Template.BACK_BUTTON)
 
             if VITALITY_MISSION:
                 print("Vitality mission active")
@@ -616,27 +617,24 @@ if __name__ == "__main__":
                 pyautogui.keyUp("alt")
 
                 print("Clicking recommended button")
-                findClick(Template.RECOMMENDED_BUTTON.value)
+                findClick(Template.RECOMMENDED_BUTTON)
 
                 print("Clicking dimensinal_trials_button")
-                findClick(Template.DIMENSINAL_TRIALS_BUTTON.value, threshold=0.75)
+                findClick(Template.DIMENSINAL_TRIALS_BUTTON, threshold=0.75)
 
                 print("Clicking gold_drill_button")
-                findClick(Template.GOLD_DRILL_BUTTON.value)
+                findClick(Template.GOLD_DRILL_BUTTON)
 
                 print("Clicking go_button")
-                findClick(Template.GO_BUTTON.value)
+                findClick(Template.GO_BUTTON)
 
                 print("Waiting for quick_battle_button")
-                if findWait(Template.QUICK_BATTLE_BUTTON.value, max_tries=2) == "FOUND":
+                if findWait(Template.QUICK_BATTLE_BUTTON, max_tries=2) == "FOUND":
                     print("Clicking quick_battle_button")
-                    findClick(Template.QUICK_BATTLE_BUTTON.value)
+                    findClick(Template.QUICK_BATTLE_BUTTON)
 
                 print("Checking for operation_success_text")
-                if (
-                    findWait(Template.OPERATION_SUCCESS_TEXT.value, max_tries=2)
-                    == "FOUND"
-                ):
+                if findWait(Template.OPERATION_SUCCESS_TEXT, max_tries=2) == "FOUND":
                     print("Operation success found — marking as completed")
                     dimensional_trials_update(i, "Completed")
                 else:
@@ -644,16 +642,16 @@ if __name__ == "__main__":
                     dimensional_trials_update(i, "Not Completed")
 
                 print("Clicking anywhere_text")
-                findClick(Template.ANYWHERE_TEXT.value)
+                findClick(Template.ANYWHERE_TEXT)
 
                 print("Clicking cross_button")
-                findClick(Template.CROSS_BUTTON.value, threshold=0.8)
+                findClick(Template.CROSS_BUTTON, threshold=0.8)
 
                 print("Clicking back_button")
-                findClick(Template.BACK_BUTTON.value, threshold=0.75)
+                findClick(Template.BACK_BUTTON, threshold=0.75)
 
                 print("Clicking back_button")
-                findClick(Template.BACK_BUTTON.value, max_tries=2, threshold=0.75)
+                findClick(Template.BACK_BUTTON, max_tries=2, threshold=0.75)
 
             if CREW_DONATIONS:
                 debug_update(i, "crew donations")
@@ -662,65 +660,61 @@ if __name__ == "__main__":
                 pyautogui.press("enter")
 
                 print("Clicking esc_button")
-                findClick(Template.ESC_BUTTON.value, max_tries=2, threshold=0.75)
+                findClick(Template.ESC_BUTTON, max_tries=2, threshold=0.75)
 
                 print("Clicking crew_icon")
-                findClick(
-                    [Template.CREW_ICON.value, Template.CREW_ICON_2.value], max_tries=2
-                )
+                findClick([Template.CREW_ICON, Template.CREW_ICON_2], max_tries=2)
 
                 debug_update(i, "Daily Donation")
                 print("Clicking daily button")
-                findClick(Template.DAILY_BUTTON.value)
+                findClick(Template.DAILY_BUTTON)
 
                 print("Clicking donate button")
-                findClick(Template.DONATE_BUTTON.value)
+                findClick(Template.DONATE_BUTTON)
 
-                if findWait(Template.OK_BUTTON.value, max_tries=2) == "FOUND":
+                if findWait(Template.OK_BUTTON, max_tries=2) == "FOUND":
                     daily_dono_update(i, "Donated")
                 else:
                     daily_dono_update(i, "Not Donated")
                 print("Clicking donation ok button")
-                findClick(Template.OK_BUTTON.value, max_tries=2)
+                findClick(Template.OK_BUTTON, max_tries=2)
 
                 print("Clicking back button")
-                findClick(Template.BACK_BUTTON.value, threshold=0.75)
+                findClick(Template.BACK_BUTTON, threshold=0.75)
 
                 print("Press Escape key")
                 pyautogui.press("esc")
 
             # print("Closing chat")
-            # findClick(Template.CHAT_CLOSE_BUTTON.value, max_tries=2)
+            # findClick(Template.CHAT_CLOSE_BUTTON, max_tries=2)
 
             # print("Press escape key")
             # pyautogui.press("enter")
 
             # print("Clicking esc_button")
-            # findClick(Template.ESC_BUTTON.value, threshold=0.75)
+            # findClick(Template.ESC_BUTTON, threshold=0.75)
 
             print("Clicking esc_button")
             pyautogui.press("esc")
 
             print("Clicking settings_button")
-            findClick(
-                [Template.SETTINGS_BUTTON.value, Template.SETTINGS_BUTTON_2.value]
-            )
+            findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
 
             print("Clicking switch_acc_button")
-            findClick(Template.SWITCH_ACC_BUTTON.value)
+            findClick(Template.SWITCH_ACC_BUTTON)
             sleep(2)
 
             print("Clicking switch_acc_text")
-            findClick(Template.SWITCH_ACC_TEXT.value)
+            findClick(Template.SWITCH_ACC_TEXT)
 
             status_update(i, "checked")
             debug_update(i, "")
 
             print("Waiting for origin_reso to appear")
-            findWait(Template.ORIGIN_RESO.value, max_tries=5)
+            findWait(Template.ORIGIN_RESO, max_tries=5)
 
             print("Waiting for origin_reso to disappear")
-            findWait(Template.ORIGIN_RESO.value, invert_threshold=True, max_tries=50)
+            findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
             sleep(2)
 
             workbook.Save()
