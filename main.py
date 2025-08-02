@@ -6,6 +6,7 @@ import sys
 import time
 from datetime import datetime
 from time import sleep
+from typing import Callable
 from zoneinfo import ZoneInfo
 
 import cv2
@@ -66,7 +67,7 @@ window_title = "Tower of Fantasy  "
 #     win32api.PostMessage(HWND, win32con.WM_LBUTTONUP, 0, lParam)
 
 
-def get_window_geometry(title, width=720, height=480):
+def get_window_geometry(title: str, width: int = 720, height: int = 480):
     windows = pw.getWindowsWithTitle(title)
     if not windows:
         return None, None, None, None, None
@@ -126,7 +127,7 @@ def debug_update(i, value, col=7):
 # ============ Screenshot & Detection ============
 
 
-def preassign(threshold, invert_threshold):
+def preassign(threshold: float, invert_threshold: bool):
     threshold *= thresh_factor
     if invert_threshold:
         threshold = -threshold
@@ -145,13 +146,13 @@ def takeScreenshot(window_size=(0, 0, 720, 480), image_name="temp.tmppng"):
 
 
 def findElement(
-    window_size,
-    img_list,
-    threshold=0.85,
-    invert_threshold=False,
-    leniency=0.0,
-    max_tries=100,
-    fallback_func=lambda: print("Failed to find object"),
+    window_size: tuple[int, int, int, int],
+    img_list: list[Template],
+    threshold: float = 0.85,
+    invert_threshold: bool = False,
+    leniency: float = 0.0,
+    max_tries: int = 100,
+    fallback_func: Callable[[], None] = lambda: print("Failed to find object"),
 ):
     threshold, max_val, temp_img_name, tries = preassign(threshold, invert_threshold)
     if type(img_list) is not list:
@@ -277,11 +278,11 @@ if __name__ == "__main__":
     wh = f"{w}x{h}"
 
     def findClick(
-        img_list,
-        threshold=0.85,
-        invert_threshold=False,
-        leniency=0,
-        max_tries=999,
+        img_list: list[Template],
+        threshold: float = 0.85,
+        invert_threshold: bool = False,
+        leniency: float = 0,
+        max_tries: int = 999,
     ):
         loc, val = findElement(
             size,
@@ -297,7 +298,12 @@ if __name__ == "__main__":
             # dirclick(*loc)
             # raise ValueError("did it click?")
 
-    def findWait(img_list, threshold=0.85, invert_threshold=False, max_tries=999):
+    def findWait(
+        img_list: list[Template],
+        threshold: float = 0.85,
+        invert_threshold: bool = False,
+        max_tries: int = 999,
+    ):
         _, val = findElement(
             size,
             img_list,
