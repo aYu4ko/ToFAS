@@ -96,32 +96,32 @@ def checkTime():
 # ============ Excel Helper Functions ============
 
 
-def status_update(i, value, col=2):
-    sheet.Cells(i + 2, col).Value = value
+def status_update(i: int, value: str):
+    sheet.Cells(i + 2, 2).Value = value
 
 
-def daily_dono_update(i, value, col=3):
-    sheet.Cells(i + 2, col).Value = value
+def daily_dono_update(i: int, value: str):
+    sheet.Cells(i + 2, 3).Value = value
 
 
-def dimensional_trials_update(i, value, col=4):
-    sheet.Cells(i + 2, col).Value = value
+def dimensional_trials_update(i: int, value: str):
+    sheet.Cells(i + 2, 4).Value = value
 
 
-def oldman_update(i, value, col=5):
-    sheet.Cells(i + 2, col).Value = value
+def oldman_update(i: int, value: str):
+    sheet.Cells(i + 2, 5).Value = value
 
 
-def supply_run_update(i, value, col=6):
-    sheet.Cells(i + 2, col).Value = value
+def supply_run_update(i: int, value: str):
+    sheet.Cells(i + 2, 6).Value = value
 
 
-def supply_run_2_update(i, value, col=0):
-    sheet.Cells(i + 2, col).Value = value
+def supply_run_2_update(i: int, value: str):
+    sheet.Cells(i + 2, 0).Value = value
 
 
-def debug_update(i, value, col=7):
-    sheet.Cells(i + 2, col).Value = value
+def debug_update(i: int, value: str):
+    sheet.Cells(i + 2, 7).Value = value
 
 
 # ============ Screenshot & Detection ============
