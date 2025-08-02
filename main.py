@@ -34,14 +34,14 @@ creds = df[["ign"]]
 n = len(creds)
 
 # flags
-oldman = True
-mia_kitchen_mission = False
-vitality_mission = False
-bygone_mission = False
-crew_donations = False
-login_rewards = False
-redeem_rewards = False
-claim_mail = False
+OLDMAN = True
+MIA_KITCHEN_MISSION = False
+VITALITY_MISSION = False
+BYGONE_MISSION = False
+CREW_DONATIONS = False
+LOGIN_REWARDS = False
+REDEEM_REWARDS = False
+CLAIM_MAIL = False
 
 redeem_code = "624star"
 
@@ -436,7 +436,7 @@ if __name__ == "__main__":
 
             # pyautogui.press('tab') #Secret
 
-            if login_rewards:
+            if LOGIN_REWARDS:
                 print("Objective: Supply Run")
                 debug_update(i, "Supply Run")
 
@@ -484,7 +484,7 @@ if __name__ == "__main__":
                 print("Clicking back_button")
                 findClick(back_button, max_tries=2, threshold=0.75)
 
-            if oldman:
+            if OLDMAN:
                 print("Objective: Oldman")
                 debug_update(i, "Checking Oldman")
 
@@ -516,7 +516,7 @@ if __name__ == "__main__":
                 findClick(back_button, threshold=0.75)
                 sleep(1)
 
-            if bygone_mission:
+            if BYGONE_MISSION:
                 print("Objective: Bygone Phantasm")
                 debug_update(i, "Bygone Mission")
                 print("Pressing Enter")
@@ -574,7 +574,7 @@ if __name__ == "__main__":
             # print("Clicking recommended_button")
             # findClick(recommended_button,threshold=0.75)
 
-            if redeem_rewards:
+            if REDEEM_REWARDS:
                 print("Clicking gift box icon")
                 pyautogui.keyDown("alt")
                 pyautogui.press("1")
@@ -598,7 +598,7 @@ if __name__ == "__main__":
                 print("Clicking back button")
                 findClick(back_button)
 
-            if mia_kitchen_mission:
+            if MIA_KITCHEN_MISSION:
                 print("Objective: Mia's Kitchen")
                 debug_update(i, "Mia Kitchen Mission")
 
@@ -629,7 +629,7 @@ if __name__ == "__main__":
                 print("Clicking back_button")
                 findClick(back_button, threshold=0.75)
 
-            if claim_mail:
+            if CLAIM_MAIL:
                 debug_update(i, "claim mail")
 
                 print("Closing chat")
@@ -659,7 +659,7 @@ if __name__ == "__main__":
                 print("Clicking back button")
                 findClick(back_button)
 
-            if vitality_mission:
+            if VITALITY_MISSION:
                 print("Vitality mission active")
                 debug_update(i, "Vitality Mission")
 
@@ -705,7 +705,7 @@ if __name__ == "__main__":
                 print("Clicking back_button")
                 findClick(back_button, max_tries=2, threshold=0.75)
 
-            if crew_donations:
+            if CREW_DONATIONS:
                 debug_update(i, "crew donations")
 
                 print("Pressing Enter")
