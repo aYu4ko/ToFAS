@@ -1,5 +1,3 @@
-from enum import Enum
-
 import cv2
 
 
@@ -7,7 +5,9 @@ def readImg(img_name):
     return cv2.imread(f"images/{img_name}.png", cv2.IMREAD_COLOR)
 
 
-class Template(Enum):
+class Template:
+    __slots__ = ()
+
     OTHER_LOGIN = readImg("other_login")
     EMAIL_SIGNIN = readImg("email_signin")
     NEXT_STEP = readImg("next_step")

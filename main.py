@@ -147,7 +147,7 @@ def takeScreenshot(window_size=(0, 0, 720, 480), image_name="temp.tmppng"):
 
 def findElement(
     window_size: tuple[int, int, int, int],
-    img_list: list[Template],
+    img_list: list[np.ndarray],
     threshold: float = 0.85,
     invert_threshold: bool = False,
     leniency: float = 0.0,
@@ -158,17 +158,7 @@ def findElement(
     if type(img_list) is not list:
         img_list = [img_list]
 
-    # Convert enum members to their values if needed
-    processed_img_list = []
-    for img in img_list:
-        if hasattr(img, "value"):
-            # If it's an enum member, get its value
-            processed_img_list.append(img.value)
-        else:
-            # If it's already a value, use it as is
-            processed_img_list.append(img)
-
-    img_list = processed_img_list
+    # img_list now contains direct numpy arrays, no conversion needed
 
     while max_val <= threshold:
         takeScreenshot(window_size, temp_img_name)
@@ -278,7 +268,7 @@ if __name__ == "__main__":
     wh = f"{w}x{h}"
 
     def findClick(
-        img_list: list[Template],
+        img_list: list[np.ndarray],
         threshold: float = 0.85,
         invert_threshold: bool = False,
         leniency: float = 0,
@@ -299,7 +289,7 @@ if __name__ == "__main__":
             # raise ValueError("did it click?")
 
     def findWait(
-        img_list: list[Template],
+        img_list: list[np.ndarray],
         threshold: float = 0.85,
         invert_threshold: bool = False,
         max_tries: int = 999,
