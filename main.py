@@ -136,13 +136,16 @@ def takeScreenshot(window_size=(0, 0, 720, 480), image_name="temp.tmppng"):
 
 def findElement(
     window_size: tuple[int, int, int, int],
-    img_list: list[np.ndarray],
+    img_list: list[np.ndarray] | np.ndarray,
     threshold: float = 0.85,
     invert_threshold: bool = False,
     leniency: float = 0.0,
     max_tries: int = 100,
     fallback_func: Callable[[], None] = lambda: print("Failed to find object"),
 ):
+    if not isinstance(img_list, list):
+        img_list = [img_list]
+
     threshold, max_val, temp_img_name, tries = preassign(threshold, invert_threshold)
 
     while max_val <= threshold:
@@ -225,7 +228,7 @@ class Window:
 
     def findClick(
         self,
-        img_list: list[np.ndarray],
+        img_list: list[np.ndarray] | np.ndarray,
         threshold: float = 0.85,
         invert_threshold: bool = False,
         leniency: float = 0,
@@ -244,7 +247,7 @@ class Window:
 
     def findWait(
         self,
-        img_list: list[np.ndarray],
+        img_list: list[np.ndarray] | np.ndarray,
         threshold: float = 0.85,
         invert_threshold: bool = False,
         max_tries: int = 999,
@@ -294,8 +297,15 @@ class Window:
         self.findClick(Template.SERVER_GREEN_BUTTON)
 
         print("Clicking server_aestral_noa")
+        match df.server[acc_ind]:
+            case "aestral_noa":
+                srv_template = Template.SERVER_AESTRAL_NOA
+            case "animus":
+                srv_template = Template.SERVER_ANIMUS
+            case _:
+                raise ValueError("")
         self.findClick(
-            [Template.SERVER_AESTRAL_NOA, Template.SERVER_ANIMUS],
+            srv_template,
             threshold=0.9,
             max_tries=5,
         )
