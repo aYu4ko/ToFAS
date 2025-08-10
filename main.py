@@ -141,10 +141,6 @@ def findElement(
     fallback_func: Callable[[], None] = lambda: print("Failed to find object"),
 ):
     threshold, max_val, temp_img_name, tries = preassign(threshold, invert_threshold)
-    if type(img_list) is not list:
-        img_list = [img_list]
-
-    # img_list now contains direct numpy arrays, no conversion needed
 
     while max_val <= threshold:
         takeScreenshot(window_size, temp_img_name)
