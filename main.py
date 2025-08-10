@@ -206,6 +206,8 @@ checkTime()
 
 
 class Window:
+    prev_server = None
+
     def __init__(self, title: str, ind: int = 0):
         windows = pw.getWindowsWithTitle(title)
         if not windows:
@@ -292,23 +294,29 @@ class Window:
 
         self.findClick(Template.ENTER)
 
-        debug_update(acc_ind, "Server Selection")
-        print("Clicking server_green_button")
-        self.findClick(Template.SERVER_GREEN_BUTTON)
+        # Check server of the account
+        srv = df.server[acc_ind]
+        if srv != self.prev_server:
+            # Switch server only if diff server compared to previous
+            self.prev_server = srv
 
-        print("Clicking server_aestral_noa")
-        match df.server[acc_ind]:
-            case "aestral_noa":
-                srv_template = Template.SERVER_AESTRAL_NOA
-            case "animus":
-                srv_template = Template.SERVER_ANIMUS
-            case _:
-                raise ValueError("")
-        self.findClick(
-            srv_template,
-            threshold=0.9,
-            max_tries=5,
-        )
+            debug_update(acc_ind, "Server Selection")
+            print("Clicking server_green_button")
+            self.findClick(Template.SERVER_GREEN_BUTTON)
+
+            print("Clicking server")
+            match srv:
+                case "aestral_noa":
+                    srv_template = Template.SERVER_AESTRAL_NOA
+                case "animus":
+                    srv_template = Template.SERVER_ANIMUS
+                case _:
+                    raise ValueError("")
+            self.findClick(
+                srv_template,
+                threshold=0.9,
+                max_tries=5,
+            )
 
         print("Clicking enter")
         self.findClick(Template.ENTER)
