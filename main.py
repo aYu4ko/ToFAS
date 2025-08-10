@@ -113,7 +113,10 @@ def debug_update(i: int, value: str):
 # ============ Screenshot & Detection ============
 
 
-def preassign(threshold: float, invert_threshold: bool):
+def preassign(
+    threshold: float,
+    invert_threshold: bool,
+) -> tuple[float, float, str, int]:
     threshold *= thresh_factor
     if invert_threshold:
         threshold = -threshold
@@ -152,15 +155,15 @@ def findElement(
             pass
 
         n = len(img_list)
-        max_val = [[]] * n
-        max_loc = [[]] * n
+        _vals = [0.0] * n
+        _locs = [0.0] * n
         for i in range(n):
             result = cv2.matchTemplate(ss_img, img_list[i], cv2.TM_CCOEFF_NORMED)
-            _, max_val[i], _, max_loc[i] = cv2.minMaxLoc(result)
+            _, _vals[i], _, _locs[i] = cv2.minMaxLoc(result)  # type: ignore
 
-        ind = max_val.index(max(max_val))
-        max_val = max_val[ind]
-        max_loc = max_loc[ind]
+        ind = _vals.index(max(_vals))
+        max_val = _vals[ind]
+        max_loc = _locs[ind]
 
         if invert_threshold:
             max_val = -max_val
@@ -203,8 +206,7 @@ if win:
     print(f"(x1,y1,x2,y2): {size}")
     print(f"Top-left: ({size0[0]}, {size0[1]}), Size: ({w}x{h})")
 else:
-    print("Window not found")
-    sys.exit()
+    raise ValueError("Window not found!")
 
 if __name__ == "__main__":
     os.chdir(dir_path)
