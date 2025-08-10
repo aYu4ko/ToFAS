@@ -12,6 +12,14 @@ dependencies = [
     "pyautogui>=0.9.54",
     "pygetwindow>=0.0.9",
     "pyscreeze>=1.0.1",
-    "pywin32>=311",
     "pywinauto>=0.6.9",
+    "pywin32>=311; sys_platform == 'win32'",
 ]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.1",
+    "pandas-stubs>=2.3.0.250703",
+    "types-pyautogui>=0.9.3.20241230",
+]
+

@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 import pyautogui
 import pygetwindow as pw
-import win32com.client
 
 from template import Template
 
@@ -52,19 +51,6 @@ redeem_code = "624star"
 # ============ Window Functions ============
 
 window_title = "Tower of Fantasy  "
-# HWND = win32gui.FindWindow(None, window_title)
-# rect_ = win32gui.GetWindowRect(HWND)
-# print("value of window is ", HWND)
-
-
-# def dirclick(x, y):
-#     global HWND
-
-#     lParam = win32api.MAKELONG(x, y)
-
-#     win32api.PostMessage(HWND, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
-#     time.sleep(0.1)
-#     win32api.PostMessage(HWND, win32con.WM_LBUTTONUP, 0, lParam)
 
 
 def get_window_geometry(title: str, width: int = 720, height: int = 480):
@@ -226,6 +212,11 @@ else:
 
 if __name__ == "__main__":
     os.chdir(dir_path)
+    if not sys.platform.startswith("win"):
+        raise ValueError("Cannot run on Linux!")
+
+    import win32com.client  # type: ignore
+
     excel = win32com.client.Dispatch("Excel.Application")
 
     if os.path.exists(file_path):
@@ -245,13 +236,12 @@ if __name__ == "__main__":
         # creds['supply run 2'] = ""
         creds["debug"] = ""
 
-        for col_num, column_name in enumerate(creds.columns, start=1):
-            sheet.Cells(1, col_num).Value = column_name
-        for row_num, row in enumerate(creds.values, start=2):
-            for col_num, value in enumerate(row, start=1):
-                sheet.Cells(row_num, col_num).Value = value
-        workbook.SaveAs(file_path)
-        iter_range = range(n)
+    for col_num, column_name in enumerate(creds.columns, start=1):
+        sheet.Cells(1, col_num).Value = column_name
+    for row_num, row in enumerate(creds.values, start=2):
+        for col_num, value in enumerate(row, start=1):
+            sheet.Cells(row_num, col_num).Value = value
+    workbook.SaveAs(file_path)
 
     print(df)
 
@@ -303,6 +293,7 @@ if __name__ == "__main__":
         )
         return val
 
+    iter_range = range(n)
     try:
         for i in iter_range:
             t_start = time.time()
@@ -722,6 +713,6 @@ if __name__ == "__main__":
         # excel.Visible = True
 
 
-workbook.Save()
+workbook.Save()  # type: ignore
 # os.system("shutdown /s /t 1")
 # excel.Visible = True
