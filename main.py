@@ -2,6 +2,8 @@ import asyncio
 import codecs
 import os
 import queue
+import random
+import string
 import sys
 import time
 from datetime import datetime
@@ -203,9 +205,12 @@ def finalize():
 class InputScheduler:
     def __init__(self):
         self.input_queue = asyncio.Queue()
+        self.priority_queue = asyncio.Queue()  # High priority queue
         self.current_window: Optional[int] = None
         self.scheduler_task: Optional[asyncio.Task] = None
         self._running = False
+        self._priority_mode = False  # Track if we're in priority mode
+        self._priority_window: Optional[int] = None  # Window that has priority
 
     async def start(self):
         """Start the input scheduler"""
@@ -225,15 +230,29 @@ class InputScheduler:
         print("Input scheduler stopped")
 
     async def _process_input_queue(self):
-        """Process input queue in FIFO order"""
+        """Process input queue with priority support"""
         while self._running:
             try:
-                # Get next input request (with timeout to allow checking _running)
-                input_request = await asyncio.wait_for(
-                    self.input_queue.get(), timeout=0.1
-                )
-                await self._execute_input(input_request)
-                self.input_queue.task_done()
+                # Check priority queue first
+                if not self.priority_queue.empty():
+                    input_request = await asyncio.wait_for(
+                        self.priority_queue.get(), timeout=0.1
+                    )
+                    await self._execute_input(input_request)
+                    self.priority_queue.task_done()
+                    continue
+
+                # If not in priority mode, process regular queue
+                if not self._priority_mode:
+                    input_request = await asyncio.wait_for(
+                        self.input_queue.get(), timeout=0.1
+                    )
+                    await self._execute_input(input_request)
+                    self.input_queue.task_done()
+                else:
+                    # In priority mode, only process priority queue
+                    await asyncio.sleep(0.1)
+
             except asyncio.TimeoutError:
                 continue
             except asyncio.CancelledError:
@@ -292,9 +311,39 @@ class InputScheduler:
         """Schedule a hotkey combination"""
         await self.input_queue.put((window_id, "hotkey", *keys))
 
+    # Priority scheduling methods
+    async def schedule_priority_click(self, window_id: int, x: int, y: int):
+        """Schedule a high-priority click operation"""
+        await self.priority_queue.put((window_id, "click", x, y))
+
+    async def schedule_priority_type(self, window_id: int, text: str):
+        """Schedule a high-priority typing operation"""
+        await self.priority_queue.put((window_id, "type", text))
+
+    async def schedule_priority_key(self, window_id: int, key: str):
+        """Schedule a high-priority key press"""
+        await self.priority_queue.put((window_id, "key", key))
+
+    async def schedule_priority_hotkey(self, window_id: int, *keys):
+        """Schedule a high-priority hotkey combination"""
+        await self.priority_queue.put((window_id, "hotkey", *keys))
+
+    async def enter_priority_mode(self, window_id: int):
+        """Enter priority mode for a specific window"""
+        self._priority_mode = True
+        self._priority_window = window_id
+        print(f"Entered priority mode for Window {window_id + 1}")
+
+    async def exit_priority_mode(self):
+        """Exit priority mode"""
+        self._priority_mode = False
+        self._priority_window = None
+        print("Exited priority mode")
+
     async def wait_for_completion(self):
         """Wait for all queued inputs to complete"""
         await self.input_queue.join()
+        await self.priority_queue.join()
 
 
 # Global input scheduler instance
@@ -397,6 +446,39 @@ class Window:
             click_x, click_y = self.size0 + loc
             await input_scheduler.schedule_click(self.id, click_x, click_y)
 
+    async def findClickPriority(
+        self,
+        img_list: list[np.ndarray] | np.ndarray,
+        threshold: float = 0.85,
+        invert_threshold: bool = False,
+        leniency: float = 0,
+        max_tries: int = 999,
+    ):
+        """Find and click with priority (for multi-step actions)"""
+        loc, val = findElement(
+            self.size,
+            img_list,
+            threshold=threshold,
+            invert_threshold=invert_threshold,
+            leniency=leniency,
+            max_tries=max_tries,
+        )
+        if val == "FOUND":
+            click_x, click_y = self.size0 + loc
+            await input_scheduler.schedule_priority_click(self.id, click_x, click_y)
+
+    async def typePriority(self, text: str):
+        """Type text with priority (for multi-step actions)"""
+        await input_scheduler.schedule_priority_type(self.id, text)
+
+    async def keyPriority(self, key: str):
+        """Press key with priority (for multi-step actions)"""
+        await input_scheduler.schedule_priority_key(self.id, key)
+
+    async def hotkeyPriority(self, *keys):
+        """Press hotkey with priority (for multi-step actions)"""
+        await input_scheduler.schedule_priority_hotkey(self.id, *keys)
+
     def findWait(
         self,
         img_list: list[np.ndarray] | np.ndarray,
@@ -425,28 +507,37 @@ class Window:
             await self.findClick(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
 
         print("Clicking email_signin")
-        await self.findClick(Template.EMAIL_SIGNIN)
+        # Enter priority mode for multi-step action
+        await input_scheduler.enter_priority_mode(self.id)
+
+        # Click email signin with priority
+        await self.findClickPriority(Template.EMAIL_SIGNIN)
 
         debug_update(acc_ind, "Logging")
         print(f"Typing email for index {acc_ind}")
-        await input_scheduler.schedule_type(self.id, df.email[acc_ind])
+        # Type email with priority (ensures it goes to the right textbox)
+        await self.typePriority(df.email[acc_ind])
+
+        # Exit priority mode after multi-step action
 
         print("Clicking next_step")
-        self.findClick(Template.NEXT_STEP)
+        await self.findClickPriority(Template.NEXT_STEP)
         while self.findWait(Template.NEXT_STEP, threshold=0.9, max_tries=2) == "FOUND":
             print("Clicking next_step again")
-            self.findClick(Template.NEXT_STEP, threshold=0.9, max_tries=2)
+            await self.findClickPriority(Template.NEXT_STEP, threshold=0.9, max_tries=2)
             sleep(1)
         sleep(2)
 
         print(f"Typing password for index {acc_ind}")
-        pyautogui.write(df.password[acc_ind])
+        await self.typePriority(df.password[acc_ind])
+
+        await input_scheduler.exit_priority_mode()
 
         print("Clicking login")
-        self.findClick(Template.LOGIN)
+        await self.findClick(Template.LOGIN)
         sleep(1.0)
 
-        self.findClick(Template.ENTER)
+        await self.findClick(Template.ENTER)
 
         # Check server of the account
         srv = df.server[acc_ind]
@@ -456,7 +547,7 @@ class Window:
 
             debug_update(acc_ind, "Server Selection")
             print("Clicking server_green_button")
-            self.findClick(Template.SERVER_GREEN_BUTTON)
+            await self.findClick(Template.SERVER_GREEN_BUTTON)
 
             print("Clicking server")
             match srv:
@@ -466,14 +557,14 @@ class Window:
                     srv_template = Template.SERVER_ANIMUS
                 case _:
                     raise ValueError("")
-            self.findClick(
+            await self.findClick(
                 srv_template,
                 threshold=0.9,
                 max_tries=5,
             )
 
         print("Clicking enter")
-        self.findClick(Template.ENTER)
+        await self.findClick(Template.ENTER)
 
         debug_update(acc_ind, "Entering Game")
         print("Waiting for origin_reso to appear")
@@ -485,14 +576,14 @@ class Window:
 
         debug_update(acc_ind, "Entered Game")
         print("Clicking uid_text")
-        self.findClick(Template.UID_TEXT, max_tries=10)
+        await self.findClick(Template.UID_TEXT, max_tries=10)
         sleep(0.5)
 
         print("Cancelling pass window, if exists")
-        self.findClick(Template.PASS_CANCEL, max_tries=2)
+        await self.findClick(Template.PASS_CANCEL, max_tries=2)
 
         print("Clicking anywhere text")
-        self.findClick(Template.ANYWHERE_TEXT, max_tries=2)
+        await self.findClick(Template.ANYWHERE_TEXT, max_tries=2)
 
         # pyautogui.press('tab') #Secret
 
@@ -506,17 +597,17 @@ class Window:
             pyautogui.keyUp("alt")
 
             print("Clicking special_operation")
-            self.findClick(Template.SPECIAL_OPERATION)
+            await self.findClick(Template.SPECIAL_OPERATION)
 
             print("Clicking summer_welfare")
-            self.findClick(Template.SUMMER_WELFARE)
+            await self.findClick(Template.SUMMER_WELFARE)
 
             # print("Clicking supply_run")
             # main_win.findClick(Template.SUPPLY_RUN)
 
             print("Clicking supply_claim")
-            self.findClick(Template.SUPPLY_CLAIM, max_tries=2)
-            self.findClick(Template.FINAL_SUPPLY_CLAIM, max_tries=2)
+            await self.findClick(Template.SUPPLY_CLAIM, max_tries=2)
+            await self.findClick(Template.FINAL_SUPPLY_CLAIM, max_tries=2)
 
             print("Waiting for all_rewards_collected")
             if self.findWait(Template.ALL_REWARDS_COLLECTED, max_tries=2) == "FOUND":
@@ -542,24 +633,29 @@ class Window:
             #     supply_run_2_update(i, 'Not Completed')
 
             print("Clicking back_button")
-            self.findClick(Template.BACK_BUTTON, max_tries=2, threshold=0.75)
+            await self.findClick(Template.BACK_BUTTON, max_tries=2, threshold=0.75)
 
         if OLDMAN:
             print("Objective: Oldman")
             debug_update(acc_ind, "Checking Oldman")
 
             print("Clicking sword_icon")
+
+            await input_scheduler.enter_priority_mode(self.id)
+
             pyautogui.keyDown("alt")
             pyautogui.press("3")
             pyautogui.keyUp("alt")
             # pyautogui.hotkey('alt', '3')
             # main_win.findClick(Template.SWORD_ICON,threshold=0.75)
 
+            await input_scheduler.exit_priority_mode()
+
             print("Clicking casual_tab")
-            self.findClick(Template.CASUAL_TAB)
+            await self.findClick(Template.CASUAL_TAB)
 
             print("Clicking artificial_island_icon")
-            self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
+            await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
 
             print("Waiting for oldman_icon")
             self.findWait(Template.OLDMAN_ICON, max_tries=3)
@@ -570,10 +666,10 @@ class Window:
             oldman_update(acc_ind, oldman_status_)
 
             print("Clicking back_button")
-            self.findClick(Template.BACK_BUTTON, threshold=0.75)
+            await self.findClick(Template.BACK_BUTTON, threshold=0.75)
 
             print("Clicking back_button again")
-            self.findClick(Template.BACK_BUTTON, threshold=0.75)
+            await self.findClick(Template.BACK_BUTTON, threshold=0.75)
             sleep(1)
 
         if BYGONE_MISSION:
@@ -589,13 +685,13 @@ class Window:
             # main_win.findClick(Template.SWORD_ICON,threshold=0.75)
 
             print("Clicking challenge_button")
-            self.findClick(Template.CHALLENGE_BUTTON)
+            await self.findClick(Template.CHALLENGE_BUTTON)
 
             print("Clicking bygone_icon")
-            self.findClick(Template.BYGONE_ICON)
+            await self.findClick(Template.BYGONE_ICON)
 
             print("Clicking sneak level_button")
-            self.findClick(Template.SNEAK_LEVEL_BUTTON, threshold=0.7)
+            await self.findClick(Template.SNEAK_LEVEL_BUTTON, threshold=0.7)
 
             print("Waiting for initiating_transmission to appear")
             self.findWait(Template.INITIATING_TRANSMISSION)
@@ -614,7 +710,7 @@ class Window:
             self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
 
             print("Clicking skip_button")
-            self.findClick(Template.SKIP_BUTTON, max_tries=10)
+            await self.findClick(Template.SKIP_BUTTON, max_tries=10)
 
             print("Waiting for exit_button to appear")
             self.findWait(Template.EXIT_BUTTON)
@@ -623,10 +719,10 @@ class Window:
             pyautogui.press("esc")
 
             print("Clicking exit_button")
-            self.findClick(Template.EXIT_BUTTON)
+            await self.findClick(Template.EXIT_BUTTON)
 
             print("Clicking ok_button")
-            self.findClick(Template.OK_BUTTON)
+            await self.findClick(Template.OK_BUTTON)
 
             print("Sleeping for 7 seconds")
             sleep(7)
@@ -645,22 +741,22 @@ class Window:
             pyautogui.keyUp("alt")
 
             print("Clicking rewards button")
-            self.findClick(Template.REWARDS_BUTTON)
+            await self.findClick(Template.REWARDS_BUTTON)
 
             print("Clicking exchange button")
-            self.findClick(Template.EXCHANGE_BUTTON)
+            await self.findClick(Template.EXCHANGE_BUTTON)
 
             print("Clicking gift code block")
-            self.findClick(Template.GIFT_CODE_BLOCK)
+            await self.findClick(Template.GIFT_CODE_BLOCK)
 
             print("Writing redeem code")
             pyautogui.write(redeem_code)
 
             print("Clicking confirm button")
-            self.findClick(Template.CONFIRM_BUTTON)
+            await self.findClick(Template.CONFIRM_BUTTON)
 
             print("Clicking back button")
-            self.findClick(Template.BACK_BUTTON)
+            await self.findClick(Template.BACK_BUTTON)
 
         if MIA_KITCHEN_MISSION:
             print("Objective: Mia's Kitchen")
@@ -672,59 +768,59 @@ class Window:
             pyautogui.keyUp("alt")
 
             print("Clicking recommended button")
-            self.findClick(Template.RECOMMENDED_BUTTON)
+            await self.findClick(Template.RECOMMENDED_BUTTON)
 
             print("Waiting for mia_kitchen_done_icon")
             while self.findWait(Template.MIA_KITCHEN_ICON, max_tries=2) == "FOUND":
                 print("mia_kitchen_done_icon not found, retrying...")
                 print("Clicking mia_kitchen_icon")
-                self.findClick(Template.MIA_KITCHEN_ICON)
+                await self.findClick(Template.MIA_KITCHEN_ICON)
 
                 print("Clicking taste_button")
-                self.findClick(Template.TASTE_BUTTON)
+                await self.findClick(Template.TASTE_BUTTON)
 
                 print("Clicking back_button")
-                self.findClick(Template.BACK_BUTTON, threshold=0.75)
+                await self.findClick(Template.BACK_BUTTON, threshold=0.75)
                 sleep(2)
 
                 self.findWait(Template.CONGRATULATIONS_TEXT)
-                self.findClick(Template.ANYWHERE_TEXT)
+                await self.findClick(Template.ANYWHERE_TEXT)
 
             print("Clicking back_button")
-            self.findClick(Template.BACK_BUTTON, threshold=0.75)
+            await self.findClick(Template.BACK_BUTTON, threshold=0.75)
 
         if CLAIM_MAIL:
             debug_update(acc_ind, "claim mail")
 
             print("Closing chat")
-            self.findClick(Template.CHAT_CLOSE_BUTTON, max_tries=2)
+            await self.findClick(Template.CHAT_CLOSE_BUTTON, max_tries=2)
             sleep(0.5)
 
             print("Press Escape key")
             pyautogui.press("esc")
 
             print("Clicking mail icon")
-            self.findClick(
+            await self.findClick(
                 [Template.MAIL_ICON, Template.MAIL_ICON2],
                 threshold=0.75,
             )
 
             print("Clicking claim all button")
-            self.findClick(Template.CLAIM_ALL_BUTTON)
+            await self.findClick(Template.CLAIM_ALL_BUTTON)
 
             sleep(1.0)  # safer with delay
 
             print("Click anywhere text")
-            self.findClick(Template.ANYWHERE_TEXT, max_tries=2)
+            await self.findClick(Template.ANYWHERE_TEXT, max_tries=2)
 
             print("Clicking delete all button")
-            self.findClick(Template.DELETE_ALL_BUTTON)
+            await self.findClick(Template.DELETE_ALL_BUTTON)
 
             print("Clicking OK button")
-            self.findClick(Template.OK_BUTTON, max_tries=2)
+            await self.findClick(Template.OK_BUTTON, max_tries=2)
 
             print("Clicking back button")
-            self.findClick(Template.BACK_BUTTON)
+            await self.findClick(Template.BACK_BUTTON)
 
         if VITALITY_MISSION:
             print("Vitality mission active")
@@ -736,21 +832,21 @@ class Window:
             pyautogui.keyUp("alt")
 
             print("Clicking recommended button")
-            self.findClick(Template.RECOMMENDED_BUTTON)
+            await self.findClick(Template.RECOMMENDED_BUTTON)
 
             print("Clicking dimensinal_trials_button")
-            self.findClick(Template.DIMENSINAL_TRIALS_BUTTON, threshold=0.75)
+            await self.findClick(Template.DIMENSINAL_TRIALS_BUTTON, threshold=0.75)
 
             print("Clicking gold_drill_button")
-            self.findClick(Template.GOLD_DRILL_BUTTON)
+            await self.findClick(Template.GOLD_DRILL_BUTTON)
 
             print("Clicking go_button")
-            self.findClick(Template.GO_BUTTON)
+            await self.findClick(Template.GO_BUTTON)
 
             print("Waiting for quick_battle_button")
             if self.findWait(Template.QUICK_BATTLE_BUTTON, max_tries=2) == "FOUND":
                 print("Clicking quick_battle_button")
-                self.findClick(Template.QUICK_BATTLE_BUTTON)
+                await self.findClick(Template.QUICK_BATTLE_BUTTON)
 
             print("Checking for operation_success_text")
             if self.findWait(Template.OPERATION_SUCCESS_TEXT, max_tries=2) == "FOUND":
@@ -761,16 +857,16 @@ class Window:
                 dimensional_trials_update(acc_ind, "Not Completed")
 
             print("Clicking anywhere_text")
-            self.findClick(Template.ANYWHERE_TEXT)
+            await self.findClick(Template.ANYWHERE_TEXT)
 
             print("Clicking cross_button")
-            self.findClick(Template.CROSS_BUTTON, threshold=0.8)
+            await self.findClick(Template.CROSS_BUTTON, threshold=0.8)
 
             print("Clicking back_button")
-            self.findClick(Template.BACK_BUTTON, threshold=0.75)
+            await self.findClick(Template.BACK_BUTTON, threshold=0.75)
 
             print("Clicking back_button")
-            self.findClick(Template.BACK_BUTTON, max_tries=2, threshold=0.75)
+            await self.findClick(Template.BACK_BUTTON, max_tries=2, threshold=0.75)
 
         if CREW_DONATIONS:
             debug_update(acc_ind, "crew donations")
@@ -779,27 +875,29 @@ class Window:
             pyautogui.press("enter")
 
             print("Clicking esc_button")
-            self.findClick(Template.ESC_BUTTON, max_tries=2, threshold=0.75)
+            await self.findClick(Template.ESC_BUTTON, max_tries=2, threshold=0.75)
 
             print("Clicking crew_icon")
-            self.findClick([Template.CREW_ICON, Template.CREW_ICON_2], max_tries=2)
+            await self.findClick(
+                [Template.CREW_ICON, Template.CREW_ICON_2], max_tries=2
+            )
 
             debug_update(acc_ind, "Daily Donation")
             print("Clicking daily button")
-            self.findClick(Template.DAILY_BUTTON)
+            await self.findClick(Template.DAILY_BUTTON)
 
             print("Clicking donate button")
-            self.findClick(Template.DONATE_BUTTON)
+            await self.findClick(Template.DONATE_BUTTON)
 
             if self.findWait(Template.OK_BUTTON, max_tries=2) == "FOUND":
                 daily_dono_update(acc_ind, "Donated")
             else:
                 daily_dono_update(acc_ind, "Not Donated")
             print("Clicking donation ok button")
-            self.findClick(Template.OK_BUTTON, max_tries=2)
+            await self.findClick(Template.OK_BUTTON, max_tries=2)
 
             print("Clicking back button")
-            self.findClick(Template.BACK_BUTTON, threshold=0.75)
+            await self.findClick(Template.BACK_BUTTON, threshold=0.75)
 
             print("Press Escape key")
             pyautogui.press("esc")
@@ -808,14 +906,14 @@ class Window:
         pyautogui.press("esc")
 
         print("Clicking settings_button")
-        self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
+        await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
 
         print("Clicking switch_acc_button")
-        self.findClick(Template.SWITCH_ACC_BUTTON)
+        await self.findClick(Template.SWITCH_ACC_BUTTON)
         sleep(2)
 
         print("Clicking switch_acc_text")
-        self.findClick(Template.SWITCH_ACC_TEXT)
+        await self.findClick(Template.SWITCH_ACC_TEXT)
 
         status_update(acc_ind, "checked")
         debug_update(acc_ind, "")
