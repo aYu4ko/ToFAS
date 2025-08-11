@@ -497,7 +497,7 @@ class Window:
 
     def activate(self):
         if not self.win.isActive:
-            pyautogui.click(self.size0[0] + 2, self.size0[1])
+            pyautogui.click(self.size0[0] + 15, self.size0[1] + 1)
 
     async def run_for_account(self, acc_ind: int):
         print("Clicking other_login")
