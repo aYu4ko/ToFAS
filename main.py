@@ -246,64 +246,60 @@ class InputScheduler:
 
     async def _process_input_queue(self):
         """Process input queue with main/incoming queue system"""
-        print("[INPUT_SCHEDULER] Starting input queue processor")
+        print("[PROCESSOR] Starting input queue processor")
         loop_count = 0
 
         while self._running:
             loop_count += 1
-            print(f"[INPUT_SCHEDULER] Loop #{loop_count} - Running: {self._running}")
+            print(f"[PROCESSOR] Loop #{loop_count} - Running: {self._running}")
 
             try:
                 # Process main queue first (highest priority)
                 main_queue_size = self.main_queue.qsize()
-                print(f"[INPUT_SCHEDULER] Main queue size: {main_queue_size}")
+                print(f"[PROCESSOR] Main queue size: {main_queue_size}")
 
                 if not self.main_queue.empty():
-                    print(f"[INPUT_SCHEDULER] Processing main queue item")
+                    print(f"[PROCESSOR] Processing main queue item")
                     input_request = await self.main_queue.get()
-                    print(
-                        f"[INPUT_SCHEDULER] Got main queue input request: {input_request}"
-                    )
+                    print(f"[PROCESSOR] Got main queue input request: {input_request}")
                     await self._execute_input(input_request)
                     self.main_queue.task_done()
-                    print(
-                        f"[INPUT_SCHEDULER] Main queue input completed, task_done() called"
-                    )
+                    print(f"[PROCESSOR] Main queue input completed, task_done() called")
                     continue
 
                 # If main queue is empty, process incoming queue
                 incoming_queue_size = self.incoming_queue.qsize()
-                print(f"[INPUT_SCHEDULER] Incoming queue size: {incoming_queue_size}")
+                print(f"[PROCESSOR] Incoming queue size: {incoming_queue_size}")
 
                 if not self.incoming_queue.empty():
-                    print(f"[INPUT_SCHEDULER] Processing incoming queue item")
+                    print(f"[PROCESSOR] Processing incoming queue item")
                     input_request = await self.incoming_queue.get()
                     print(
-                        f"[INPUT_SCHEDULER] Got incoming queue input request: {input_request}"
+                        f"[PROCESSOR] Got incoming queue input request: {input_request}"
                     )
                     await self._execute_input(input_request)
                     self.incoming_queue.task_done()
                     print(
-                        f"[INPUT_SCHEDULER] Incoming queue input completed, task_done() called"
+                        f"[PROCESSOR] Incoming queue input completed, task_done() called"
                     )
                 else:
                     # No inputs to process, sleep briefly
-                    print(f"[INPUT_SCHEDULER] No inputs to process, sleeping for 0.1s")
+                    print(f"[PROCESSOR] No inputs to process, sleeping for 0.1s")
                     await asyncio.sleep(0.1)
+                    print(f"[PROCESSOR] Will resume now after sleeping maybe")
+                    continue
 
             except asyncio.CancelledError:
-                print(f"[INPUT_SCHEDULER] CancelledError caught, breaking loop")
+                print(f"[PROCESSOR] CancelledError caught, breaking loop")
                 break
             except Exception as e:
-                print(f"[INPUT_SCHEDULER] Unexpected error in loop: {e}")
+                print(f"[PROCESSOR] Unexpected error in loop: {e}")
                 import traceback
 
                 traceback.print_exc()
                 await asyncio.sleep(0.1)  # Brief pause before retrying
 
-        print(
-            f"[INPUT_SCHEDULER] Input queue processor stopped after {loop_count} loops"
-        )
+        print(f"[PROCESSOR] Input queue processor stopped after {loop_count} loops")
 
     async def _execute_input(self, input_request):
         """Execute a single input request"""
