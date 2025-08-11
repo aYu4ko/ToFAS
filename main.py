@@ -286,6 +286,7 @@ class RimInputScheduler:
                     ):
                         # End priority
                         self.priority_window = None
+                        req.event.set()
                         continue
                     elif self.priority_window == req.window.id:
                         # executing on priority window
@@ -302,6 +303,7 @@ class RimInputScheduler:
                     if req.request_type == RequestType.PRIORITY_START:
                         # Start priority mode
                         self.priority_window = req.window.id
+                        req.event.set()
                         continue
                     else:
                         # Execute normal stuff
