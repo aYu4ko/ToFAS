@@ -2,8 +2,6 @@ import asyncio
 import codecs
 import os
 import queue
-import random
-import string
 import sys
 import time
 from datetime import datetime
@@ -120,22 +118,27 @@ def debug_update(i: int, value: str):
 def preassign(
     threshold: float,
     invert_threshold: bool,
-) -> tuple[float, float, str, int]:
+) -> tuple[float, float, int]:
     threshold *= thresh_factor
     if invert_threshold:
         threshold = -threshold
     max_val = -1.0
-    temp_img_name = (
-        "temp/"
-        + "".join(random.choice(string.ascii_letters) for i in range(10))
-        + ".tmppng"
-    )
-    return threshold, max_val, temp_img_name, 0
+    return threshold, max_val, 0
 
 
 def takeScreenshot(window_size=(0, 0, 720, 480), image_name="temp.tmppng"):
     im = pyautogui.screenshot(region=window_size)
     im.save(image_name, format="PNG")
+
+
+def takeScreenshotDirect(window_size=(0, 0, 720, 480)):
+    """Take screenshot directly and return as numpy array for OpenCV"""
+    im = pyautogui.screenshot(region=window_size)
+    # Convert PIL Image to numpy array (RGB format)
+    img_array = np.array(im)
+    # Convert RGB to BGR (OpenCV format)
+    img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+    return img_bgr
 
 
 def findElement(
@@ -150,16 +153,10 @@ def findElement(
     if not isinstance(img_list, list):
         img_list = [img_list]
 
-    threshold, max_val, temp_img_name, tries = preassign(threshold, invert_threshold)
+    threshold, max_val, tries = preassign(threshold, invert_threshold)
 
     while max_val <= threshold:
-        takeScreenshot(window_size, temp_img_name)
-        ss_img = cv2.imread(temp_img_name, cv2.IMREAD_COLOR)
-
-        try:
-            os.remove(temp_img_name)
-        except:
-            pass
+        ss_img = takeScreenshotDirect(window_size)
 
         n = len(img_list)
         _vals = [0.0] * n
