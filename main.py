@@ -674,6 +674,8 @@ class Window:
         sleep(2)
 
 
+main_win = Window(window_title)
+
 if __name__ == "__main__":
     os.chdir(dir_path)
 
@@ -682,12 +684,14 @@ if __name__ == "__main__":
     excel = win32com.client.Dispatch("Excel.Application")
 
     if os.path.exists(file_path):
+        print("The xl already exist")
         workbook = excel.Workbooks.Open(file_path)
         sheet = workbook.Sheets(1)
         workbook.Save()
         esheet = pd.read_excel(file_path)
         iter_range = list(esheet.loc[esheet["status"] == "not checked"].index)
     else:
+        print("New xl")
         workbook = excel.Workbooks.Add()
         sheet = workbook.Sheets(1)
         creds["status"] = "not checked"
@@ -698,12 +702,12 @@ if __name__ == "__main__":
         # creds['supply run 2'] = ""
         creds["debug"] = ""
 
-    for col_num, column_name in enumerate(creds.columns, start=1):
-        sheet.Cells(1, col_num).Value = column_name
-    for row_num, row in enumerate(creds.values, start=2):
-        for col_num, value in enumerate(row, start=1):
-            sheet.Cells(row_num, col_num).Value = value
-    workbook.SaveAs(file_path)
+        for col_num, column_name in enumerate(creds.columns, start=1):
+            sheet.Cells(1, col_num).Value = column_name
+        for row_num, row in enumerate(creds.values, start=2):
+            for col_num, value in enumerate(row, start=1):
+                sheet.Cells(row_num, col_num).Value = value
+        workbook.SaveAs(file_path)
 
     print(df)
 
@@ -716,8 +720,6 @@ if __name__ == "__main__":
     input("Press any key to continue after 3 seconds...\n")
 
     sleep(3)
-
-    main_win = Window(window_title)
 
     iter_range = range(n)
     pyautogui.PAUSE = 1.0  # 1.0 #0.5
