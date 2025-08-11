@@ -143,7 +143,7 @@ def takeScreenshotDirect(window_size=(0, 0, 720, 480)):
     return img_bgr
 
 
-def findElement(
+async def findElement(
     window_size: tuple[int, int, int, int],
     img_list: list[np.ndarray] | np.ndarray,
     threshold: float = 0.85,
@@ -183,7 +183,7 @@ def findElement(
             if tries >= max_tries:
                 fallback_func()
                 return max_loc, "not found"
-            sleep(1.5)
+            await asyncio.sleep(1.5)
 
     print("DEBUG: ACCEPTED")
     return np.array(max_loc), "FOUND"
@@ -642,7 +642,7 @@ class Window:
         leniency: float = 0,
         max_tries: int = 999,
     ):
-        loc, val = findElement(
+        loc, val = await findElement(
             self.size,
             img_list,
             threshold=threshold,
@@ -663,7 +663,7 @@ class Window:
         max_tries: int = 999,
     ):
         """Find and click with priority (for multi-step actions)"""
-        loc, val = findElement(
+        loc, val = await findElement(
             self.size,
             img_list,
             threshold=threshold,
@@ -687,14 +687,14 @@ class Window:
         """Press hotkey with priority (for multi-step actions)"""
         await input_scheduler.schedule_priority_hotkey(self.id, *keys)
 
-    def findWait(
+    async def findWait(
         self,
         img_list: list[np.ndarray] | np.ndarray,
         threshold: float = 0.85,
         invert_threshold: bool = False,
         max_tries: int = 999,
     ):
-        _, val = findElement(
+        _, val = await findElement(
             self.size,
             img_list,
             threshold=threshold,
@@ -711,7 +711,10 @@ class Window:
         print("Clicking other_login")
         await self.findClick(Template.OTHER_LOGIN)
 
-        if self.findWait(Template.OTHER_LOGIN, threshold=0.9, max_tries=2) == "FOUND":
+        if (
+            await self.findWait(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
+            == "FOUND"
+        ):
             await self.findClick(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
 
         print("Clicking email_signin")
@@ -730,7 +733,10 @@ class Window:
 
         print("Clicking next_step")
         await self.findClickPriority(Template.NEXT_STEP)
-        while self.findWait(Template.NEXT_STEP, threshold=0.9, max_tries=2) == "FOUND":
+        while (
+            await self.findWait(Template.NEXT_STEP, threshold=0.9, max_tries=2)
+            == "FOUND"
+        ):
             print("Clicking next_step again")
             await self.findClickPriority(Template.NEXT_STEP, threshold=0.9, max_tries=2)
             sleep(1)
@@ -776,10 +782,10 @@ class Window:
 
         debug_update(acc_ind, "Entering Game")
         print("Waiting for origin_reso to appear")
-        self.findWait(Template.ORIGIN_RESO, max_tries=5)
+        await self.findWait(Template.ORIGIN_RESO, max_tries=5)
 
         print("Waiting for origin_reso to disappear")
-        self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
+        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
         sleep(7)
 
         debug_update(acc_ind, "Entered Game")
@@ -816,7 +822,10 @@ class Window:
             await self.findClick(Template.FINAL_SUPPLY_CLAIM, max_tries=2)
 
             print("Waiting for all_rewards_collected")
-            if self.findWait(Template.ALL_REWARDS_COLLECTED, max_tries=2) == "FOUND":
+            if (
+                await self.findWait(Template.ALL_REWARDS_COLLECTED, max_tries=2)
+                == "FOUND"
+            ):
                 print("All rewards collected")
                 supply_run_update(acc_ind, "Completed")
             else:
@@ -862,10 +871,10 @@ class Window:
             await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
 
             print("Waiting for oldman_icon")
-            self.findWait(Template.OLDMAN_ICON, max_tries=3)
+            await self.findWait(Template.OLDMAN_ICON, max_tries=3)
 
             print("Waiting for oldman_icon (status check)")
-            oldman_status_ = self.findWait(Template.OLDMAN_ICON, max_tries=2)
+            oldman_status_ = await self.findWait(Template.OLDMAN_ICON, max_tries=2)
             print("DEBUG: oldman", oldman_status_)
             oldman_update(acc_ind, oldman_status_)
 
@@ -896,26 +905,28 @@ class Window:
             await self.findClick(Template.SNEAK_LEVEL_BUTTON, threshold=0.7)
 
             print("Waiting for initiating_transmission to appear")
-            self.findWait(Template.INITIATING_TRANSMISSION)
+            await self.findWait(Template.INITIATING_TRANSMISSION)
 
             print("Waiting for initiating_transmission to disappear")
-            self.findWait(
+            await self.findWait(
                 Template.INITIATING_TRANSMISSION,
                 invert_threshold=True,
                 max_tries=50,
             )
 
             print("Waiting for origin_reso to appear")
-            self.findWait(Template.ORIGIN_RESO, max_tries=5)
+            await self.findWait(Template.ORIGIN_RESO, max_tries=5)
 
             print("Waiting for origin_reso to disappear")
-            self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
+            await self.findWait(
+                Template.ORIGIN_RESO, invert_threshold=True, max_tries=50
+            )
 
             print("Clicking skip_button")
             await self.findClick(Template.SKIP_BUTTON, max_tries=10)
 
             print("Waiting for exit_button to appear")
-            self.findWait(Template.EXIT_BUTTON)
+            await self.findWait(Template.EXIT_BUTTON)
 
             print("Pressing ESC key")
             await input_scheduler.schedule_key(self.id, "esc")
@@ -929,7 +940,7 @@ class Window:
             print("Sleeping for 7 seconds")
             sleep(7)
 
-            self.findWait(Template.UID_TEXT)
+            await self.findWait(Template.UID_TEXT)
             sleep(1)
 
         # main_win.findWait(sword_icon,threshold=0.75)
@@ -969,7 +980,9 @@ class Window:
             await self.findClick(Template.RECOMMENDED_BUTTON)
 
             print("Waiting for mia_kitchen_done_icon")
-            while self.findWait(Template.MIA_KITCHEN_ICON, max_tries=2) == "FOUND":
+            while (
+                await self.findWait(Template.MIA_KITCHEN_ICON, max_tries=2) == "FOUND"
+            ):
                 print("mia_kitchen_done_icon not found, retrying...")
                 print("Clicking mia_kitchen_icon")
                 await self.findClick(Template.MIA_KITCHEN_ICON)
@@ -981,7 +994,7 @@ class Window:
                 await self.findClick(Template.BACK_BUTTON, threshold=0.75)
                 sleep(2)
 
-                self.findWait(Template.CONGRATULATIONS_TEXT)
+                await self.findWait(Template.CONGRATULATIONS_TEXT)
                 await self.findClick(Template.ANYWHERE_TEXT)
 
             print("Clicking back_button")
@@ -1040,12 +1053,18 @@ class Window:
             await self.findClick(Template.GO_BUTTON)
 
             print("Waiting for quick_battle_button")
-            if self.findWait(Template.QUICK_BATTLE_BUTTON, max_tries=2) == "FOUND":
+            if (
+                await self.findWait(Template.QUICK_BATTLE_BUTTON, max_tries=2)
+                == "FOUND"
+            ):
                 print("Clicking quick_battle_button")
                 await self.findClick(Template.QUICK_BATTLE_BUTTON)
 
             print("Checking for operation_success_text")
-            if self.findWait(Template.OPERATION_SUCCESS_TEXT, max_tries=2) == "FOUND":
+            if (
+                await self.findWait(Template.OPERATION_SUCCESS_TEXT, max_tries=2)
+                == "FOUND"
+            ):
                 print("Operation success found — marking as completed")
                 dimensional_trials_update(acc_ind, "Completed")
             else:
@@ -1085,7 +1104,7 @@ class Window:
             print("Clicking donate button")
             await self.findClick(Template.DONATE_BUTTON)
 
-            if self.findWait(Template.OK_BUTTON, max_tries=2) == "FOUND":
+            if await self.findWait(Template.OK_BUTTON, max_tries=2) == "FOUND":
                 daily_dono_update(acc_ind, "Donated")
             else:
                 daily_dono_update(acc_ind, "Not Donated")
@@ -1115,10 +1134,10 @@ class Window:
         debug_update(acc_ind, "")
 
         print("Waiting for origin_reso to appear")
-        self.findWait(Template.ORIGIN_RESO, max_tries=5)
+        await self.findWait(Template.ORIGIN_RESO, max_tries=5)
 
         print("Waiting for origin_reso to disappear")
-        self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
+        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
         sleep(2)
 
     async def process_queue(self, account_queue: queue.Queue):
