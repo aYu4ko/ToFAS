@@ -706,12 +706,6 @@ class Window:
         print("Clicking other_login")
         await self.findClick(Template.OTHER_LOGIN)
 
-        # if (
-        #     await self.findWait(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
-        #     == "FOUND"
-        # ):
-        #     await self.findClick(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
-
         print("Clicking email_signin")
         # Enter priority mode for multi-step action
         await input_scheduler.enter_priority_mode(self.id)
