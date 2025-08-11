@@ -60,7 +60,7 @@ def get_window_geometry(title: str, width: int = 720, height: int = 480):
     win = windows[0]
     win.resizeTo(width, height)
     win.moveTo(0, 0)
-    win.activate()
+    # win.activate()
     x, y = win.left, win.top
     w, h = win.width, win.height
     return win, (x, y, x + w, y + h), np.array((x, y)), w, h
@@ -218,7 +218,7 @@ class Window:
         # TODO: set ind to move window to diff location
 
         win.moveTo(0, 0)
-        win.activate()
+        # win.activate()
         x, y = win.left, win.top
         w, h = win.width, win.height
 
