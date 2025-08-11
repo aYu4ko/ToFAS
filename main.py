@@ -698,12 +698,13 @@ if __name__ == "__main__":
         # creds['supply run 2'] = ""
         creds["debug"] = ""
 
-    for col_num, column_name in enumerate(creds.columns, start=1):
-        sheet.Cells(1, col_num).Value = column_name
-    for row_num, row in enumerate(creds.values, start=2):
-        for col_num, value in enumerate(row, start=1):
-            sheet.Cells(row_num, col_num).Value = value
-    workbook.SaveAs(file_path)
+        for col_num, column_name in enumerate(creds.columns, start=1):
+            sheet.Cells(1, col_num).Value = column_name
+        for row_num, row in enumerate(creds.values, start=2):
+            for col_num, value in enumerate(row, start=1):
+                sheet.Cells(row_num, col_num).Value = value
+        workbook.SaveAs(file_path)
+        iter_range = range(n)
 
     print(df)
 
@@ -719,7 +720,6 @@ if __name__ == "__main__":
 
     main_win = Window(window_title)
 
-    iter_range = range(n)
     pyautogui.PAUSE = 1.0  # 1.0 #0.5
     try:
         for i in iter_range:
