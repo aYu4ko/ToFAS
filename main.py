@@ -8,7 +8,7 @@ import sys
 import time
 from datetime import datetime
 from time import sleep
-from typing import Callable
+from typing import Callable, Optional
 from zoneinfo import ZoneInfo
 
 import cv2
@@ -200,6 +200,108 @@ def finalize():
             pass
 
 
+# ============ Input Scheduler ============
+class InputScheduler:
+    def __init__(self):
+        self.input_queue = asyncio.Queue()
+        self.current_window: Optional[int] = None
+        self.scheduler_task: Optional[asyncio.Task] = None
+        self._running = False
+
+    async def start(self):
+        """Start the input scheduler"""
+        self._running = True
+        self.scheduler_task = asyncio.create_task(self._process_input_queue())
+        print("Input scheduler started")
+
+    async def stop(self):
+        """Stop the input scheduler"""
+        self._running = False
+        if self.scheduler_task:
+            self.scheduler_task.cancel()
+            try:
+                await self.scheduler_task
+            except asyncio.CancelledError:
+                pass
+        print("Input scheduler stopped")
+
+    async def _process_input_queue(self):
+        """Process input queue in FIFO order"""
+        while self._running:
+            try:
+                # Get next input request (with timeout to allow checking _running)
+                input_request = await asyncio.wait_for(
+                    self.input_queue.get(), timeout=0.1
+                )
+                await self._execute_input(input_request)
+                self.input_queue.task_done()
+            except asyncio.TimeoutError:
+                continue
+            except asyncio.CancelledError:
+                break
+
+    async def _execute_input(self, input_request):
+        """Execute a single input request"""
+        window_id, input_type, *args = input_request
+
+        # Activate window if different from current
+        if self.current_window != window_id:
+            await self._activate_window(window_id)
+            self.current_window = window_id
+
+        # Execute the input
+        if input_type == "click":
+            x, y = args
+            pyautogui.click(x, y)
+            print(f"Window {window_id + 1}: Clicked at ({x}, {y})")
+        elif input_type == "type":
+            text = args[0]
+            pyautogui.write(text)
+            print(f"Window {window_id + 1}: Typed '{text}'")
+        elif input_type == "key":
+            key = args[0]
+            pyautogui.press(key)
+            print(f"Window {window_id + 1}: Pressed key '{key}'")
+        elif input_type == "hotkey":
+            keys = args
+            pyautogui.hotkey(*keys)
+            print(f"Window {window_id + 1}: Pressed hotkey {'+'.join(keys)}")
+
+    async def _activate_window(self, window_id):
+        """Activate a specific window"""
+        # Find the window instance and activate it
+        for inst in win_instances:
+            if inst.id == window_id:
+                inst.activate()
+                print(f"Activated Window {window_id + 1}")
+                await asyncio.sleep(0.1)  # Small delay for window activation
+                break
+
+    async def schedule_click(self, window_id: int, x: int, y: int):
+        """Schedule a click operation"""
+        await self.input_queue.put((window_id, "click", x, y))
+
+    async def schedule_type(self, window_id: int, text: str):
+        """Schedule a typing operation"""
+        await self.input_queue.put((window_id, "type", text))
+
+    async def schedule_key(self, window_id: int, key: str):
+        """Schedule a key press"""
+        await self.input_queue.put((window_id, "key", key))
+
+    async def schedule_hotkey(self, window_id: int, *keys):
+        """Schedule a hotkey combination"""
+        await self.input_queue.put((window_id, "hotkey", *keys))
+
+    async def wait_for_completion(self):
+        """Wait for all queued inputs to complete"""
+        await self.input_queue.join()
+
+
+# Global input scheduler instance
+input_scheduler = InputScheduler()
+
+
 # ============ Main ============
 if not sys.platform.startswith("win"):
     raise ValueError("Cannot run on Linux!")
@@ -276,7 +378,7 @@ class Window:
         self.h = h
         self.id = ind
 
-    def findClick(
+    async def findClick(
         self,
         img_list: list[np.ndarray] | np.ndarray,
         threshold: float = 0.85,
@@ -293,7 +395,8 @@ class Window:
             max_tries=max_tries,
         )
         if val == "FOUND":
-            pyautogui.click(*(self.size0 + loc))
+            click_x, click_y = self.size0 + loc
+            await input_scheduler.schedule_click(self.id, click_x, click_y)
 
     def findWait(
         self,
@@ -315,19 +418,19 @@ class Window:
         if not self.win.isActive:
             pyautogui.click(self.size0[0] + 2, self.size0[1])
 
-    def run_for_account(self, acc_ind: int):
+    async def run_for_account(self, acc_ind: int):
         print("Clicking other_login")
-        self.findClick(Template.OTHER_LOGIN)
+        await self.findClick(Template.OTHER_LOGIN)
 
         if self.findWait(Template.OTHER_LOGIN, threshold=0.9, max_tries=2) == "FOUND":
-            self.findClick(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
+            await self.findClick(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
 
         print("Clicking email_signin")
-        self.findClick(Template.EMAIL_SIGNIN)
+        await self.findClick(Template.EMAIL_SIGNIN)
 
         debug_update(acc_ind, "Logging")
         print(f"Typing email for index {acc_ind}")
-        pyautogui.write(df.email[acc_ind])
+        await input_scheduler.schedule_type(self.id, df.email[acc_ind])
 
         print("Clicking next_step")
         self.findClick(Template.NEXT_STEP)
@@ -731,7 +834,7 @@ class Window:
                 # Get next account from queue (non-blocking)
                 acc_ind = account_queue.get_nowait()
                 print(f"Window {self.id + 1} processing account {acc_ind}")
-                self.run_for_account(acc_ind)
+                await self.run_for_account(acc_ind)
                 WORKBOOK.Save()
                 print(f"Window {self.id + 1} completed account {acc_ind}")
             except queue.Empty:
@@ -755,6 +858,9 @@ async def main():
     pyautogui.PAUSE = 1.0  # 1.0 #0.5
 
     try:
+        # Start the input scheduler
+        await input_scheduler.start()
+
         # Create a shared queue with all accounts
         account_queue = queue.Queue()
         total_accounts = len(ITER_RANGE)
@@ -780,9 +886,15 @@ async def main():
         # Wait for all windows to finish processing
         await asyncio.gather(*tasks)
 
+        # Wait for all input operations to complete
+        await input_scheduler.wait_for_completion()
+
     except KeyboardInterrupt:
         print("Interrupt signal detected!")
         WORKBOOK.Save()
+    finally:
+        # Stop the input scheduler
+        await input_scheduler.stop()
 
     WORKBOOK.Save()  # type: ignore
 
