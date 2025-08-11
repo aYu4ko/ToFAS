@@ -235,26 +235,20 @@ class InputScheduler:
             try:
                 # Check priority queue first
                 if not self.priority_queue.empty():
-                    input_request = await asyncio.wait_for(
-                        self.priority_queue.get(), timeout=0.1
-                    )
+                    input_request = await self.priority_queue.get()
                     await self._execute_input(input_request)
                     self.priority_queue.task_done()
                     continue
 
                 # If not in priority mode, process regular queue
-                if not self._priority_mode:
-                    input_request = await asyncio.wait_for(
-                        self.input_queue.get(), timeout=0.1
-                    )
+                if not self._priority_mode and not self.input_queue.empty():
+                    input_request = await self.input_queue.get()
                     await self._execute_input(input_request)
                     self.input_queue.task_done()
                 else:
-                    # In priority mode, only process priority queue
+                    # No inputs to process, sleep briefly
                     await asyncio.sleep(0.1)
 
-            except asyncio.TimeoutError:
-                continue
             except asyncio.CancelledError:
                 break
 
@@ -591,10 +585,8 @@ class Window:
             print("Objective: Supply Run")
             debug_update(acc_ind, "Supply Run")
 
-            print("Cliclinng Gift Box Icon")
-            pyautogui.keyDown("alt")
-            pyautogui.press("1")
-            pyautogui.keyUp("alt")
+            print("Clicking Gift Box Icon")
+            await input_scheduler.schedule_hotkey(self.id, "alt", "1")
 
             print("Clicking special_operation")
             await self.findClick(Template.SPECIAL_OPERATION)
@@ -643,9 +635,7 @@ class Window:
 
             await input_scheduler.enter_priority_mode(self.id)
 
-            pyautogui.keyDown("alt")
-            pyautogui.press("3")
-            pyautogui.keyUp("alt")
+            await input_scheduler.schedule_priority_hotkey(self.id, "alt", "3")
             # pyautogui.hotkey('alt', '3')
             # main_win.findClick(Template.SWORD_ICON,threshold=0.75)
 
@@ -676,11 +666,9 @@ class Window:
             print("Objective: Bygone Phantasm")
             debug_update(acc_ind, "Bygone Mission")
             print("Pressing Enter")
-            pyautogui.press("enter")
+            await input_scheduler.schedule_key(self.id, "enter")
             print("Clicking sword_icon")
-            pyautogui.keyDown("alt")
-            pyautogui.press("3")
-            pyautogui.keyUp("alt")
+            await input_scheduler.schedule_hotkey(self.id, "alt", "3")
             # pyautogui.hotkey('alt', '3')
             # main_win.findClick(Template.SWORD_ICON,threshold=0.75)
 
@@ -716,7 +704,7 @@ class Window:
             self.findWait(Template.EXIT_BUTTON)
 
             print("Pressing ESC key")
-            pyautogui.press("esc")
+            await input_scheduler.schedule_key(self.id, "esc")
 
             print("Clicking exit_button")
             await self.findClick(Template.EXIT_BUTTON)
@@ -736,9 +724,7 @@ class Window:
 
         if REDEEM_REWARDS:
             print("Clicking gift box icon")
-            pyautogui.keyDown("alt")
-            pyautogui.press("1")
-            pyautogui.keyUp("alt")
+            await input_scheduler.schedule_hotkey(self.id, "alt", "1")
 
             print("Clicking rewards button")
             await self.findClick(Template.REWARDS_BUTTON)
@@ -750,7 +736,7 @@ class Window:
             await self.findClick(Template.GIFT_CODE_BLOCK)
 
             print("Writing redeem code")
-            pyautogui.write(redeem_code)
+            await input_scheduler.schedule_type(self.id, redeem_code)
 
             print("Clicking confirm button")
             await self.findClick(Template.CONFIRM_BUTTON)
@@ -763,9 +749,7 @@ class Window:
             debug_update(acc_ind, "Mia Kitchen Mission")
 
             print("Clicking sword_icon")
-            pyautogui.keyDown("alt")
-            pyautogui.press("3")
-            pyautogui.keyUp("alt")
+            await input_scheduler.schedule_hotkey(self.id, "alt", "3")
 
             print("Clicking recommended button")
             await self.findClick(Template.RECOMMENDED_BUTTON)
@@ -797,7 +781,7 @@ class Window:
             sleep(0.5)
 
             print("Press Escape key")
-            pyautogui.press("esc")
+            await input_scheduler.schedule_key(self.id, "esc")
 
             print("Clicking mail icon")
             await self.findClick(
@@ -827,9 +811,7 @@ class Window:
             debug_update(acc_ind, "Vitality Mission")
 
             print("Clicking sword_icon")
-            pyautogui.keyDown("alt")
-            pyautogui.press("3")
-            pyautogui.keyUp("alt")
+            await input_scheduler.schedule_hotkey(self.id, "alt", "3")
 
             print("Clicking recommended button")
             await self.findClick(Template.RECOMMENDED_BUTTON)
@@ -872,7 +854,7 @@ class Window:
             debug_update(acc_ind, "crew donations")
 
             print("Pressing Enter")
-            pyautogui.press("enter")
+            await input_scheduler.schedule_key(self.id, "enter")
 
             print("Clicking esc_button")
             await self.findClick(Template.ESC_BUTTON, max_tries=2, threshold=0.75)
@@ -900,10 +882,10 @@ class Window:
             await self.findClick(Template.BACK_BUTTON, threshold=0.75)
 
             print("Press Escape key")
-            pyautogui.press("esc")
+            await input_scheduler.schedule_key(self.id, "esc")
 
         print("Clicking esc_button")
-        pyautogui.press("esc")
+        await input_scheduler.schedule_key(self.id, "esc")
 
         print("Clicking settings_button")
         await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
