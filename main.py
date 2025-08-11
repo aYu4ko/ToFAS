@@ -21,6 +21,8 @@ from template import Template
 
 # ============ Initial Setup ============
 pyautogui.FAILSAFE = False
+pyautogui.PAUSE = 1.0
+
 show_d = False
 dir_path = sys.path[0]
 
@@ -855,7 +857,6 @@ async def main():
     sleep(3)
 
     ITER_RANGE = range(n)
-    pyautogui.PAUSE = 1.0  # 1.0 #0.5
 
     try:
         # Start the input scheduler
