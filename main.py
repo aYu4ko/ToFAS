@@ -487,6 +487,7 @@ class InputScheduler:
         )
 
     async def enter_priority_mode(self, window_id: int):
+        return
         """Enter priority mode for a specific window"""
         print(f"[INPUT_SCHEDULER] Entering priority mode for Window {window_id + 1}")
         self._priority_mode = True
@@ -496,6 +497,7 @@ class InputScheduler:
         )
 
     async def exit_priority_mode(self):
+        return
         """Exit priority mode and schedule all priority requests"""
         print(f"[INPUT_SCHEDULER] Exiting priority mode")
 
