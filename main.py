@@ -251,7 +251,6 @@ class InputScheduler:
 
         while self._running:
             loop_count += 1
-            print(f"[PROCESSOR] Loop #{loop_count} - Running: {self._running}")
 
             try:
                 # Process main queue first (highest priority)
@@ -284,9 +283,7 @@ class InputScheduler:
                     )
                 else:
                     # No inputs to process, sleep briefly
-                    print(f"[PROCESSOR] No inputs to process, sleeping for 0.1s")
-                    await asyncio.sleep(0.1)
-                    print(f"[PROCESSOR] Will resume now after sleeping maybe")
+                    await asyncio.sleep(0.5)
                     continue
 
             except asyncio.CancelledError:
@@ -499,7 +496,6 @@ class InputScheduler:
         )
 
     async def enter_priority_mode(self, window_id: int):
-        return
         """Enter priority mode for a specific window"""
         print(f"[INPUT_SCHEDULER] Entering priority mode for Window {window_id + 1}")
         self._priority_mode = True
@@ -509,7 +505,6 @@ class InputScheduler:
         )
 
     async def exit_priority_mode(self):
-        return
         """Exit priority mode and schedule all priority requests"""
         print(f"[INPUT_SCHEDULER] Exiting priority mode")
 
@@ -711,11 +706,11 @@ class Window:
         print("Clicking other_login")
         await self.findClick(Template.OTHER_LOGIN)
 
-        if (
-            await self.findWait(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
-            == "FOUND"
-        ):
-            await self.findClick(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
+        # if (
+        #     await self.findWait(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
+        #     == "FOUND"
+        # ):
+        #     await self.findClick(Template.OTHER_LOGIN, threshold=0.9, max_tries=2)
 
         print("Clicking email_signin")
         # Enter priority mode for multi-step action
