@@ -1069,7 +1069,9 @@ async def main():
 
     try:
         # Start the input scheduler
+        print("[MAIN] Starting input scheduler...")
         await input_scheduler.start()
+        print("[MAIN] Input scheduler started successfully")
 
         # Create a shared queue with all accounts
         account_queue = queue.Queue()
@@ -1093,11 +1095,14 @@ async def main():
             task = asyncio.create_task(inst.process_queue(account_queue))
             tasks.append(task)
 
-        # Wait for all windows to finish processing
-        await asyncio.gather(*tasks)
+        print(f"[MAIN] Created {len(tasks)} window tasks")
+        print("[MAIN] Running window tasks and input scheduler concurrently...")
 
-        # Wait for all input operations to complete
-        await input_scheduler.wait_for_completion()
+        # Run both window tasks and input scheduler task concurrently
+        all_tasks = tasks + [input_scheduler.scheduler_task]
+        await asyncio.gather(*all_tasks)
+
+        print("[MAIN] All tasks completed")
 
     except KeyboardInterrupt:
         print("Interrupt signal detected!")
