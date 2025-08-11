@@ -287,7 +287,7 @@ class RimInputScheduler:
                         # End priority
                         self.priority_window = None
                         continue
-                    elif self.priority_window == self.current_window:
+                    elif self.priority_window == req.window.id:
                         # executing on priority window
                         await self.main_queue.put(req)
                         continue
