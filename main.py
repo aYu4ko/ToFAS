@@ -206,19 +206,22 @@ checkTime()
 
 
 class Window:
+    _w = 720
+    _h = 480
     prev_server = None
+
+    win: pw.Win32Window
 
     def __init__(self, title: str, ind: int = 0):
         windows = pw.getWindowsWithTitle(title)
         if not windows:
             raise ValueError("Window not found!")
-        win = windows[0]
-        win.resizeTo(720, 480)
+        win: pw.Win32Window = windows[0]
+        win.resizeTo(self._w, self._h)
 
         # TODO: set ind to move window to diff location
 
-        win.moveTo(0, 0)
-        win.activate()
+        win.moveTo(self._w * (ind), 0)
         x, y = win.left, win.top
         w, h = win.width, win.height
 
@@ -262,6 +265,10 @@ class Window:
             max_tries=max_tries,
         )
         return val
+
+    def activate(self):
+        if not self.win.isActive:
+            pyautogui.click(self.size0[0] + 2, self.size0[1])
 
     def run_for_account(self, acc_ind: int):
         print("Clicking other_login")
