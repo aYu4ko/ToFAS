@@ -204,13 +204,16 @@ def finalize():
 # ============ Input Scheduler ============
 class InputScheduler:
     def __init__(self):
-        self.input_queue = asyncio.Queue()
-        self.priority_queue = asyncio.Queue()  # High priority queue
+        self.main_queue = asyncio.Queue()  # Main queue for all scheduled inputs
+        self.incoming_queue = (
+            asyncio.Queue()
+        )  # Queue for non-priority window inputs during priority mode
         self.current_window: Optional[int] = None
         self.scheduler_task: Optional[asyncio.Task] = None
         self._running = False
         self._priority_mode = False  # Track if we're in priority mode
         self._priority_window: Optional[int] = None  # Window that has priority
+        self._priority_requests = []  # Store priority requests to be scheduled
 
     async def start(self):
         """Start the input scheduler"""
@@ -242,7 +245,7 @@ class InputScheduler:
         print("Input scheduler stopped")
 
     async def _process_input_queue(self):
-        """Process input queue with priority support"""
+        """Process input queue with main/incoming queue system"""
         print("[INPUT_SCHEDULER] Starting input queue processor")
         loop_count = 0
 
@@ -251,49 +254,41 @@ class InputScheduler:
             print(f"[INPUT_SCHEDULER] Loop #{loop_count} - Running: {self._running}")
 
             try:
-                # Check priority queue first
-                priority_queue_size = self.priority_queue.qsize()
-                print(f"[INPUT_SCHEDULER] Priority queue size: {priority_queue_size}")
+                # Process main queue first (highest priority)
+                main_queue_size = self.main_queue.qsize()
+                print(f"[INPUT_SCHEDULER] Main queue size: {main_queue_size}")
 
-                if not self.priority_queue.empty():
-                    print(f"[INPUT_SCHEDULER] Processing priority queue item")
-                    input_request = await self.priority_queue.get()
+                if not self.main_queue.empty():
+                    print(f"[INPUT_SCHEDULER] Processing main queue item")
+                    input_request = await self.main_queue.get()
                     print(
-                        f"[INPUT_SCHEDULER] Got priority input request: {input_request}"
+                        f"[INPUT_SCHEDULER] Got main queue input request: {input_request}"
                     )
                     await self._execute_input(input_request)
-                    self.priority_queue.task_done()
+                    self.main_queue.task_done()
                     print(
-                        f"[INPUT_SCHEDULER] Priority input completed, task_done() called"
+                        f"[INPUT_SCHEDULER] Main queue input completed, task_done() called"
                     )
                     continue
 
-                # If not in priority mode, process regular queue
-                regular_queue_size = self.input_queue.qsize()
-                print(f"[INPUT_SCHEDULER] Regular queue size: {regular_queue_size}")
-                print(f"[INPUT_SCHEDULER] Priority mode: {self._priority_mode}")
+                # If main queue is empty, process incoming queue
+                incoming_queue_size = self.incoming_queue.qsize()
+                print(f"[INPUT_SCHEDULER] Incoming queue size: {incoming_queue_size}")
 
-                if not self._priority_mode and not self.input_queue.empty():
-                    print(f"[INPUT_SCHEDULER] Processing regular queue item")
-                    input_request = await self.input_queue.get()
+                if not self.incoming_queue.empty():
+                    print(f"[INPUT_SCHEDULER] Processing incoming queue item")
+                    input_request = await self.incoming_queue.get()
                     print(
-                        f"[INPUT_SCHEDULER] Got regular input request: {input_request}"
+                        f"[INPUT_SCHEDULER] Got incoming queue input request: {input_request}"
                     )
                     await self._execute_input(input_request)
-                    self.input_queue.task_done()
+                    self.incoming_queue.task_done()
                     print(
-                        f"[INPUT_SCHEDULER] Regular input completed, task_done() called"
+                        f"[INPUT_SCHEDULER] Incoming queue input completed, task_done() called"
                     )
                 else:
                     # No inputs to process, sleep briefly
-                    if self._priority_mode:
-                        print(
-                            f"[INPUT_SCHEDULER] In priority mode, skipping regular queue"
-                        )
-                    else:
-                        print(
-                            f"[INPUT_SCHEDULER] No inputs to process, sleeping for 0.1s"
-                        )
+                    print(f"[INPUT_SCHEDULER] No inputs to process, sleeping for 0.1s")
                     await asyncio.sleep(0.1)
 
             except asyncio.CancelledError:
@@ -371,81 +366,124 @@ class InputScheduler:
                 await asyncio.sleep(0.1)  # Small delay for window activation
                 break
 
+    def _should_use_incoming_queue(self, window_id: int) -> bool:
+        """Determine if a request should go to incoming queue based on priority mode"""
+        if not self._priority_mode:
+            return False
+        # If in priority mode and this is not the priority window, use incoming queue
+        return window_id != self._priority_window
+
     async def schedule_click(self, window_id: int, x: int, y: int):
         """Schedule a click operation"""
         print(
             f"[INPUT_SCHEDULER] Scheduling click for window {window_id} at ({x}, {y})"
         )
-        await self.input_queue.put((window_id, "click", x, y))
-        print(
-            f"[INPUT_SCHEDULER] Click scheduled, queue size: {self.input_queue.qsize()}"
-        )
+
+        if self._should_use_incoming_queue(window_id):
+            print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
+            await self.incoming_queue.put((window_id, "click", x, y))
+            print(
+                f"[INPUT_SCHEDULER] Click added to incoming queue, size: {self.incoming_queue.qsize()}"
+            )
+        else:
+            print(f"[INPUT_SCHEDULER] Adding to main queue")
+            await self.main_queue.put((window_id, "click", x, y))
+            print(
+                f"[INPUT_SCHEDULER] Click added to main queue, size: {self.main_queue.qsize()}"
+            )
 
     async def schedule_type(self, window_id: int, text: str):
         """Schedule a typing operation"""
         print(f"[INPUT_SCHEDULER] Scheduling type for window {window_id}: '{text}'")
-        await self.input_queue.put((window_id, "type", text))
-        print(
-            f"[INPUT_SCHEDULER] Type scheduled, queue size: {self.input_queue.qsize()}"
-        )
+
+        if self._should_use_incoming_queue(window_id):
+            print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
+            await self.incoming_queue.put((window_id, "type", text))
+            print(
+                f"[INPUT_SCHEDULER] Type added to incoming queue, size: {self.incoming_queue.qsize()}"
+            )
+        else:
+            print(f"[INPUT_SCHEDULER] Adding to main queue")
+            await self.main_queue.put((window_id, "type", text))
+            print(
+                f"[INPUT_SCHEDULER] Type added to main queue, size: {self.main_queue.qsize()}"
+            )
 
     async def schedule_key(self, window_id: int, key: str):
         """Schedule a key press"""
         print(f"[INPUT_SCHEDULER] Scheduling key press for window {window_id}: '{key}'")
-        await self.input_queue.put((window_id, "key", key))
-        print(
-            f"[INPUT_SCHEDULER] Key press scheduled, queue size: {self.input_queue.qsize()}"
-        )
+
+        if self._should_use_incoming_queue(window_id):
+            print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
+            await self.incoming_queue.put((window_id, "key", key))
+            print(
+                f"[INPUT_SCHEDULER] Key press added to incoming queue, size: {self.incoming_queue.qsize()}"
+            )
+        else:
+            print(f"[INPUT_SCHEDULER] Adding to main queue")
+            await self.main_queue.put((window_id, "key", key))
+            print(
+                f"[INPUT_SCHEDULER] Key press added to main queue, size: {self.main_queue.qsize()}"
+            )
 
     async def schedule_hotkey(self, window_id: int, *keys):
         """Schedule a hotkey combination"""
         print(
             f"[INPUT_SCHEDULER] Scheduling hotkey for window {window_id}: {'+'.join(keys)}"
         )
-        await self.input_queue.put((window_id, "hotkey", *keys))
-        print(
-            f"[INPUT_SCHEDULER] Hotkey scheduled, queue size: {self.input_queue.qsize()}"
-        )
 
-    # Priority scheduling methods
+        if self._should_use_incoming_queue(window_id):
+            print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
+            await self.incoming_queue.put((window_id, "hotkey", *keys))
+            print(
+                f"[INPUT_SCHEDULER] Hotkey added to incoming queue, size: {self.incoming_queue.qsize()}"
+            )
+        else:
+            print(f"[INPUT_SCHEDULER] Adding to main queue")
+            await self.main_queue.put((window_id, "hotkey", *keys))
+            print(
+                f"[INPUT_SCHEDULER] Hotkey added to main queue, size: {self.main_queue.qsize()}"
+            )
+
+    # Priority scheduling methods - these store requests to be scheduled later
     async def schedule_priority_click(self, window_id: int, x: int, y: int):
-        """Schedule a high-priority click operation"""
+        """Schedule a priority click operation (stored for later scheduling)"""
         print(
-            f"[INPUT_SCHEDULER] Scheduling PRIORITY click for window {window_id} at ({x}, {y})"
+            f"[INPUT_SCHEDULER] Storing PRIORITY click for window {window_id} at ({x}, {y})"
         )
-        await self.priority_queue.put((window_id, "click", x, y))
+        self._priority_requests.append((window_id, "click", x, y))
         print(
-            f"[INPUT_SCHEDULER] Priority click scheduled, priority queue size: {self.priority_queue.qsize()}"
+            f"[INPUT_SCHEDULER] Priority click stored, total priority requests: {len(self._priority_requests)}"
         )
 
     async def schedule_priority_type(self, window_id: int, text: str):
-        """Schedule a high-priority typing operation"""
+        """Schedule a priority typing operation (stored for later scheduling)"""
         print(
-            f"[INPUT_SCHEDULER] Scheduling PRIORITY type for window {window_id}: '{text}'"
+            f"[INPUT_SCHEDULER] Storing PRIORITY type for window {window_id}: '{text}'"
         )
-        await self.priority_queue.put((window_id, "type", text))
+        self._priority_requests.append((window_id, "type", text))
         print(
-            f"[INPUT_SCHEDULER] Priority type scheduled, priority queue size: {self.priority_queue.qsize()}"
+            f"[INPUT_SCHEDULER] Priority type stored, total priority requests: {len(self._priority_requests)}"
         )
 
     async def schedule_priority_key(self, window_id: int, key: str):
-        """Schedule a high-priority key press"""
+        """Schedule a priority key press (stored for later scheduling)"""
         print(
-            f"[INPUT_SCHEDULER] Scheduling PRIORITY key press for window {window_id}: '{key}'"
+            f"[INPUT_SCHEDULER] Storing PRIORITY key press for window {window_id}: '{key}'"
         )
-        await self.priority_queue.put((window_id, "key", key))
+        self._priority_requests.append((window_id, "key", key))
         print(
-            f"[INPUT_SCHEDULER] Priority key press scheduled, priority queue size: {self.priority_queue.qsize()}"
+            f"[INPUT_SCHEDULER] Priority key press stored, total priority requests: {len(self._priority_requests)}"
         )
 
     async def schedule_priority_hotkey(self, window_id: int, *keys):
-        """Schedule a high-priority hotkey combination"""
+        """Schedule a priority hotkey combination (stored for later scheduling)"""
         print(
-            f"[INPUT_SCHEDULER] Scheduling PRIORITY hotkey for window {window_id}: {'+'.join(keys)}"
+            f"[INPUT_SCHEDULER] Storing PRIORITY hotkey for window {window_id}: {'+'.join(keys)}"
         )
-        await self.priority_queue.put((window_id, "hotkey", *keys))
+        self._priority_requests.append((window_id, "hotkey", *keys))
         print(
-            f"[INPUT_SCHEDULER] Priority hotkey scheduled, priority queue size: {self.priority_queue.qsize()}"
+            f"[INPUT_SCHEDULER] Priority hotkey stored, total priority requests: {len(self._priority_requests)}"
         )
 
     async def enter_priority_mode(self, window_id: int):
@@ -458,8 +496,38 @@ class InputScheduler:
         )
 
     async def exit_priority_mode(self):
-        """Exit priority mode"""
+        """Exit priority mode and schedule all priority requests"""
         print(f"[INPUT_SCHEDULER] Exiting priority mode")
+
+        # Schedule all accumulated priority requests to the main queue
+        if self._priority_requests:
+            print(
+                f"[INPUT_SCHEDULER] Scheduling {len(self._priority_requests)} priority requests to main queue"
+            )
+            for request in self._priority_requests:
+                await self.main_queue.put(request)
+                print(f"[INPUT_SCHEDULER] Priority request scheduled: {request}")
+            self._priority_requests.clear()
+            print(f"[INPUT_SCHEDULER] All priority requests scheduled and cleared")
+
+        # Move all incoming queue items to main queue (except if there's another priority mode in incoming queue)
+        incoming_items = []
+        while not self.incoming_queue.empty():
+            try:
+                item = self.incoming_queue.get_nowait()
+                incoming_items.append(item)
+                self.incoming_queue.task_done()
+            except asyncio.QueueEmpty:
+                break
+
+        if incoming_items:
+            print(
+                f"[INPUT_SCHEDULER] Moving {len(incoming_items)} items from incoming to main queue"
+            )
+            for item in incoming_items:
+                await self.main_queue.put(item)
+                print(f"[INPUT_SCHEDULER] Moved item to main queue: {item}")
+
         self._priority_mode = False
         self._priority_window = None
         print(
@@ -468,8 +536,8 @@ class InputScheduler:
 
     async def wait_for_completion(self):
         """Wait for all queued inputs to complete"""
-        await self.input_queue.join()
-        await self.priority_queue.join()
+        await self.main_queue.join()
+        await self.incoming_queue.join()
 
 
 # Global input scheduler instance
