@@ -2,10 +2,7 @@ import asyncio
 import codecs
 import os
 import queue
-import random
-import string
 import sys
-import time
 from datetime import datetime
 from time import sleep
 from typing import Callable, Optional
@@ -15,7 +12,7 @@ import cv2
 import numpy as np
 import pandas as pd
 import pyautogui
-import pygetwindow as pw
+import pygetwindow as pw  # type: ignore
 
 from template import Template
 
@@ -307,6 +304,11 @@ class InputScheduler:
                 f"[INPUT_SCHEDULER] Parsed: window_id={window_id}, input_type={input_type}, args={args}"
             )
 
+            # Extract acknowledgement future if present (last arg)
+            ack_future = None
+            if args and isinstance(args[-1], asyncio.Future):
+                ack_future = args.pop()
+
             # Activate window if different from current
             print(
                 f"[INPUT_SCHEDULER] Current window: {self.current_window}, target window: {window_id}"
@@ -349,11 +351,20 @@ class InputScheduler:
                 print(f"[INPUT_SCHEDULER] Unknown input type: {input_type}")
 
             print(f"[INPUT_SCHEDULER] Input execution completed")
+            # Signal completion if a future was provided
+            if ack_future is not None and not ack_future.done():
+                ack_future.set_result(True)
         except Exception as e:
             print(f"[INPUT_SCHEDULER] Error executing input {input_request}: {e}")
             import traceback
 
             traceback.print_exc()
+            # Propagate error to waiter if present
+            try:
+                if ack_future is not None and not ack_future.done():
+                    ack_future.set_exception(e)
+            except Exception:
+                pass
 
     async def _activate_window(self, window_id):
         """Activate a specific window"""
@@ -387,53 +398,68 @@ class InputScheduler:
         print(
             f"[INPUT_SCHEDULER] Scheduling click for window {window_id} at ({x}, {y})"
         )
+        loop = asyncio.get_running_loop()
+        ack_future: asyncio.Future = loop.create_future()
 
         if self._should_use_incoming_queue(window_id):
             print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
-            await self.incoming_queue.put((window_id, "click", x, y))
+            await self.incoming_queue.put((window_id, "click", x, y, ack_future))
             print(
                 f"[INPUT_SCHEDULER] Click added to incoming queue, size: {self.incoming_queue.qsize()}"
             )
         else:
             print(f"[INPUT_SCHEDULER] Adding to main queue")
-            await self.main_queue.put((window_id, "click", x, y))
+            await self.main_queue.put((window_id, "click", x, y, ack_future))
             print(
                 f"[INPUT_SCHEDULER] Click added to main queue, size: {self.main_queue.qsize()}"
             )
+
+        # Wait until the click has actually been executed
+        await ack_future
 
     async def schedule_type(self, window_id: int, text: str):
         """Schedule a typing operation"""
         print(f"[INPUT_SCHEDULER] Scheduling type for window {window_id}: '{text}'")
 
+        loop = asyncio.get_running_loop()
+        ack_future: asyncio.Future = loop.create_future()
+
         if self._should_use_incoming_queue(window_id):
             print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
-            await self.incoming_queue.put((window_id, "type", text))
+            await self.incoming_queue.put((window_id, "type", text, ack_future))
             print(
                 f"[INPUT_SCHEDULER] Type added to incoming queue, size: {self.incoming_queue.qsize()}"
             )
         else:
             print(f"[INPUT_SCHEDULER] Adding to main queue")
-            await self.main_queue.put((window_id, "type", text))
+            await self.main_queue.put((window_id, "type", text, ack_future))
             print(
                 f"[INPUT_SCHEDULER] Type added to main queue, size: {self.main_queue.qsize()}"
             )
+
+        await ack_future
 
     async def schedule_key(self, window_id: int, key: str):
         """Schedule a key press"""
         print(f"[INPUT_SCHEDULER] Scheduling key press for window {window_id}: '{key}'")
 
+        loop = asyncio.get_running_loop()
+        ack_future: asyncio.Future = loop.create_future()
+
         if self._should_use_incoming_queue(window_id):
             print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
-            await self.incoming_queue.put((window_id, "key", key))
+            await self.incoming_queue.put((window_id, "key", key, ack_future))
             print(
                 f"[INPUT_SCHEDULER] Key press added to incoming queue, size: {self.incoming_queue.qsize()}"
             )
         else:
             print(f"[INPUT_SCHEDULER] Adding to main queue")
-            await self.main_queue.put((window_id, "key", key))
+            await self.main_queue.put((window_id, "key", key, ack_future))
             print(
                 f"[INPUT_SCHEDULER] Key press added to main queue, size: {self.main_queue.qsize()}"
             )
+
+        await ack_future
 
     async def schedule_hotkey(self, window_id: int, *keys):
         """Schedule a hotkey combination"""
@@ -441,59 +467,84 @@ class InputScheduler:
             f"[INPUT_SCHEDULER] Scheduling hotkey for window {window_id}: {'+'.join(keys)}"
         )
 
+        loop = asyncio.get_running_loop()
+        ack_future: asyncio.Future = loop.create_future()
+
         if self._should_use_incoming_queue(window_id):
             print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
-            await self.incoming_queue.put((window_id, "hotkey", *keys))
+            await self.incoming_queue.put((window_id, "hotkey", *keys, ack_future))
             print(
                 f"[INPUT_SCHEDULER] Hotkey added to incoming queue, size: {self.incoming_queue.qsize()}"
             )
         else:
             print(f"[INPUT_SCHEDULER] Adding to main queue")
-            await self.main_queue.put((window_id, "hotkey", *keys))
+            await self.main_queue.put((window_id, "hotkey", *keys, ack_future))
             print(
                 f"[INPUT_SCHEDULER] Hotkey added to main queue, size: {self.main_queue.qsize()}"
             )
 
+        await ack_future
+
     # Priority scheduling methods - these store requests to be scheduled later
     async def schedule_priority_click(self, window_id: int, x: int, y: int):
-        """Schedule a priority click operation (stored for later scheduling)"""
+        """Schedule a priority click operation and wait for completion"""
         print(
-            f"[INPUT_SCHEDULER] Storing PRIORITY click for window {window_id} at ({x}, {y})"
+            f"[INPUT_SCHEDULER] Scheduling PRIORITY click for window {window_id} at ({x}, {y})"
         )
-        self._priority_requests.append((window_id, "click", x, y))
-        print(
-            f"[INPUT_SCHEDULER] Priority click stored, total priority requests: {len(self._priority_requests)}"
-        )
+        loop = asyncio.get_running_loop()
+        ack_future: asyncio.Future = loop.create_future()
+        if self._should_use_incoming_queue(window_id):
+            print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
+            await self.incoming_queue.put((window_id, "click", x, y, ack_future))
+        else:
+            print(f"[INPUT_SCHEDULER] Adding to main queue")
+            await self.main_queue.put((window_id, "click", x, y, ack_future))
+        await ack_future
 
     async def schedule_priority_type(self, window_id: int, text: str):
-        """Schedule a priority typing operation (stored for later scheduling)"""
+        """Schedule a priority typing operation and wait for completion"""
         print(
-            f"[INPUT_SCHEDULER] Storing PRIORITY type for window {window_id}: '{text}'"
+            f"[INPUT_SCHEDULER] Scheduling PRIORITY type for window {window_id}: '{text}'"
         )
-        self._priority_requests.append((window_id, "type", text))
-        print(
-            f"[INPUT_SCHEDULER] Priority type stored, total priority requests: {len(self._priority_requests)}"
-        )
+        loop = asyncio.get_running_loop()
+        ack_future: asyncio.Future = loop.create_future()
+        if self._should_use_incoming_queue(window_id):
+            print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
+            await self.incoming_queue.put((window_id, "type", text, ack_future))
+        else:
+            print(f"[INPUT_SCHEDULER] Adding to main queue")
+            await self.main_queue.put((window_id, "type", text, ack_future))
+        await ack_future
 
     async def schedule_priority_key(self, window_id: int, key: str):
-        """Schedule a priority key press (stored for later scheduling)"""
+        """Schedule a priority key press and wait for completion"""
         print(
-            f"[INPUT_SCHEDULER] Storing PRIORITY key press for window {window_id}: '{key}'"
+            f"[INPUT_SCHEDULER] Scheduling PRIORITY key press for window {window_id}: '{key}'"
         )
-        self._priority_requests.append((window_id, "key", key))
-        print(
-            f"[INPUT_SCHEDULER] Priority key press stored, total priority requests: {len(self._priority_requests)}"
-        )
+        loop = asyncio.get_running_loop()
+        ack_future: asyncio.Future = loop.create_future()
+        if self._should_use_incoming_queue(window_id):
+            print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
+            await self.incoming_queue.put((window_id, "key", key, ack_future))
+        else:
+            print(f"[INPUT_SCHEDULER] Adding to main queue")
+            await self.main_queue.put((window_id, "key", key, ack_future))
+        await ack_future
 
     async def schedule_priority_hotkey(self, window_id: int, *keys):
-        """Schedule a priority hotkey combination (stored for later scheduling)"""
+        """Schedule a priority hotkey combination and wait for completion"""
         print(
-            f"[INPUT_SCHEDULER] Storing PRIORITY hotkey for window {window_id}: {'+'.join(keys)}"
+            f"[INPUT_SCHEDULER] Scheduling PRIORITY hotkey for window {window_id}: {'+'.join(keys)}"
         )
-        self._priority_requests.append((window_id, "hotkey", *keys))
-        print(
-            f"[INPUT_SCHEDULER] Priority hotkey stored, total priority requests: {len(self._priority_requests)}"
-        )
+        loop = asyncio.get_running_loop()
+        ack_future: asyncio.Future = loop.create_future()
+        if self._should_use_incoming_queue(window_id):
+            print(f"[INPUT_SCHEDULER] Adding to incoming queue (priority mode active)")
+            await self.incoming_queue.put((window_id, "hotkey", *keys, ack_future))
+        else:
+            print(f"[INPUT_SCHEDULER] Adding to main queue")
+            await self.main_queue.put((window_id, "hotkey", *keys, ack_future))
+        await ack_future
 
     async def enter_priority_mode(self, window_id: int):
         """Enter priority mode for a specific window"""
@@ -505,19 +556,8 @@ class InputScheduler:
         )
 
     async def exit_priority_mode(self):
-        """Exit priority mode and schedule all priority requests"""
-        print(f"[INPUT_SCHEDULER] Exiting priority mode")
-
-        # Schedule all accumulated priority requests to the main queue
-        if self._priority_requests:
-            print(
-                f"[INPUT_SCHEDULER] Scheduling {len(self._priority_requests)} priority requests to main queue"
-            )
-            for request in self._priority_requests:
-                await self.main_queue.put(request)
-                print(f"[INPUT_SCHEDULER] Priority request scheduled: {request}")
-            self._priority_requests.clear()
-            print(f"[INPUT_SCHEDULER] All priority requests scheduled and cleared")
+        """Exit priority mode"""
+        print("[INPUT_SCHEDULER] Exiting priority mode")
 
         # Move all incoming queue items to main queue (except if there's another priority mode in incoming queue)
         incoming_items = []
