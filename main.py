@@ -307,64 +307,80 @@ class InputScheduler:
 
     async def _execute_input(self, input_request):
         """Execute a single input request"""
-        print(f"[INPUT_SCHEDULER] Executing input request: {input_request}")
-        window_id, input_type, *args = input_request
-        print(
-            f"[INPUT_SCHEDULER] Parsed: window_id={window_id}, input_type={input_type}, args={args}"
-        )
-
-        # Activate window if different from current
-        print(
-            f"[INPUT_SCHEDULER] Current window: {self.current_window}, target window: {window_id}"
-        )
-        if self.current_window != window_id:
+        try:
+            print(f"[INPUT_SCHEDULER] Executing input request: {input_request}")
+            window_id, input_type, *args = input_request
             print(
-                f"[INPUT_SCHEDULER] Window change needed, activating window {window_id}"
+                f"[INPUT_SCHEDULER] Parsed: window_id={window_id}, input_type={input_type}, args={args}"
             )
-            await self._activate_window(window_id)
-            self.current_window = window_id
+
+            # Activate window if different from current
             print(
-                f"[INPUT_SCHEDULER] Window {window_id} activated, current_window updated"
+                f"[INPUT_SCHEDULER] Current window: {self.current_window}, target window: {window_id}"
             )
-        else:
-            print(f"[INPUT_SCHEDULER] No window change needed")
+            if self.current_window != window_id:
+                print(
+                    f"[INPUT_SCHEDULER] Window change needed, activating window {window_id}"
+                )
+                await self._activate_window(window_id)
+                self.current_window = window_id
+                print(
+                    f"[INPUT_SCHEDULER] Window {window_id} activated, current_window updated"
+                )
+            else:
+                print(f"[INPUT_SCHEDULER] No window change needed")
 
-        # Execute the input
-        print(f"[INPUT_SCHEDULER] Executing {input_type} input...")
-        if input_type == "click":
-            x, y = args
-            print(f"[INPUT_SCHEDULER] About to click at ({x}, {y})")
-            pyautogui.click(x, y)
-            print(f"Window {window_id + 1}: Clicked at ({x}, {y})")
-        elif input_type == "type":
-            text = args[0]
-            print(f"[INPUT_SCHEDULER] About to type: '{text}'")
-            pyautogui.write(text)
-            print(f"Window {window_id + 1}: Typed '{text}'")
-        elif input_type == "key":
-            key = args[0]
-            print(f"[INPUT_SCHEDULER] About to press key: '{key}'")
-            pyautogui.press(key)
-            print(f"Window {window_id + 1}: Pressed key '{key}'")
-        elif input_type == "hotkey":
-            keys = args
-            print(f"[INPUT_SCHEDULER] About to press hotkey: {'+'.join(keys)}")
-            pyautogui.hotkey(*keys)
-            print(f"Window {window_id + 1}: Pressed hotkey {'+'.join(keys)}")
-        else:
-            print(f"[INPUT_SCHEDULER] Unknown input type: {input_type}")
+            # Execute the input
+            print(f"[INPUT_SCHEDULER] Executing {input_type} input...")
+            if input_type == "click":
+                x, y = args
+                print(f"[INPUT_SCHEDULER] About to click at ({x}, {y})")
+                pyautogui.click(x, y)
+                print(f"Window {window_id + 1}: Clicked at ({x}, {y})")
+            elif input_type == "type":
+                text = args[0]
+                print(f"[INPUT_SCHEDULER] About to type: '{text}'")
+                pyautogui.write(text)
+                print(f"Window {window_id + 1}: Typed '{text}'")
+            elif input_type == "key":
+                key = args[0]
+                print(f"[INPUT_SCHEDULER] About to press key: '{key}'")
+                pyautogui.press(key)
+                print(f"Window {window_id + 1}: Pressed key '{key}'")
+            elif input_type == "hotkey":
+                keys = args
+                print(f"[INPUT_SCHEDULER] About to press hotkey: {'+'.join(keys)}")
+                pyautogui.hotkey(*keys)
+                print(f"Window {window_id + 1}: Pressed hotkey {'+'.join(keys)}")
+            else:
+                print(f"[INPUT_SCHEDULER] Unknown input type: {input_type}")
 
-        print(f"[INPUT_SCHEDULER] Input execution completed")
+            print(f"[INPUT_SCHEDULER] Input execution completed")
+        except Exception as e:
+            print(f"[INPUT_SCHEDULER] Error executing input {input_request}: {e}")
+            import traceback
+
+            traceback.print_exc()
 
     async def _activate_window(self, window_id):
         """Activate a specific window"""
-        # Find the window instance and activate it
-        for inst in win_instances:
-            if inst.id == window_id:
-                inst.activate()
-                print(f"Activated Window {window_id + 1}")
-                await asyncio.sleep(0.1)  # Small delay for window activation
-                break
+        try:
+            # Find the window instance and activate it
+            for inst in win_instances:
+                if inst.id == window_id:
+                    inst.activate()
+                    print(f"Activated Window {window_id + 1}")
+                    await asyncio.sleep(0.1)  # Small delay for window activation
+                    break
+            else:
+                print(
+                    f"[INPUT_SCHEDULER] Warning: Window {window_id} not found in win_instances"
+                )
+        except Exception as e:
+            print(f"[INPUT_SCHEDULER] Error activating window {window_id}: {e}")
+            import traceback
+
+            traceback.print_exc()
 
     def _should_use_incoming_queue(self, window_id: int) -> bool:
         """Determine if a request should go to incoming queue based on priority mode"""
