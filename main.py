@@ -1,5 +1,7 @@
+import asyncio
 import codecs
 import os
+import queue
 import random
 import string
 import sys
@@ -204,6 +206,48 @@ if not sys.platform.startswith("win"):
 
 checkTime()
 
+# SETUP EXCEL
+import win32com.client  # type: ignore  # noqa: E402
+
+os.chdir(dir_path)
+excel = win32com.client.Dispatch("Excel.Application")
+
+if os.path.exists(file_path):
+    print("The xl already exist")
+    WORKBOOK = excel.Workbooks.Open(file_path)
+    sheet = WORKBOOK.Sheets(1)
+    WORKBOOK.Save()
+    esheet = pd.read_excel(file_path)
+    ITER_RANGE = list(esheet.loc[esheet["status"] == "not checked"].index)
+else:
+    print("New xl")
+    WORKBOOK = excel.Workbooks.Add()
+    sheet = WORKBOOK.Sheets(1)
+    creds["status"] = "not checked"
+    creds["daily dono"] = ""
+    creds["dimensional trials"] = ""
+    creds["oldman"] = ""
+    creds["supply run"] = ""
+    # creds['supply run 2'] = ""
+    creds["debug"] = ""
+
+    for col_num, column_name in enumerate(creds.columns, start=1):
+        sheet.Cells(1, col_num).Value = column_name
+    for row_num, row in enumerate(creds.values, start=2):
+        for col_num, value in enumerate(row, start=1):
+            sheet.Cells(row_num, col_num).Value = value
+    WORKBOOK.SaveAs(file_path)
+
+    ITER_RANGE = range(n)
+
+print(df)
+
+excel.Visible = True
+win2 = pw.getWindowsWithTitle(file_name + " - Excel")
+excel_win = win2[0]
+excel_win.moveTo(0, 490)
+# SETUP EXCEL END
+
 
 class Window:
     _w = 720
@@ -212,11 +256,11 @@ class Window:
 
     win: pw.Win32Window
 
-    def __init__(self, title: str, ind: int = 0):
-        windows = pw.getWindowsWithTitle(title)
-        if not windows:
-            raise ValueError("Window not found!")
-        win: pw.Win32Window = windows[0]
+    def __init__(self, win: pw.Win32Window, ind: int = 0):
+        # windows = pw.getWindowsWithTitle(title)
+        # if not windows:
+        #     raise ValueError("Window not found!")
+        # win: pw.Win32Window = windows[0]
         win.resizeTo(self._w, self._h)
 
         # TODO: set ind to move window to diff location
@@ -230,6 +274,7 @@ class Window:
         self.size0 = np.array((x, y))
         self.w = w
         self.h = h
+        self.id = ind
 
     def findClick(
         self,
@@ -680,73 +725,67 @@ class Window:
         self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
         sleep(2)
 
+    async def process_queue(self, account_queue: queue.Queue):
+        while not account_queue.empty():
+            try:
+                # Get next account from queue (non-blocking)
+                acc_ind = account_queue.get_nowait()
+                print(f"Window {self.id + 1} processing account {acc_ind}")
+                self.run_for_account(acc_ind)
+                WORKBOOK.Save()
+                print(f"Window {self.id + 1} completed account {acc_ind}")
+            except queue.Empty:
+                # Queue is empty, we're done
+                print(f"Window {self.id + 1} finished - no more accounts in queue")
+                break
 
-main_win = Window(window_title)
 
-if __name__ == "__main__":
-    os.chdir(dir_path)
+win_instances = [
+    Window(win, i) for i, win in enumerate(pw.getWindowsWithTitle(window_title))
+]
 
-    import win32com.client  # type: ignore
 
-    excel = win32com.client.Dispatch("Excel.Application")
-
-    if os.path.exists(file_path):
-        print("The xl already exist")
-        workbook = excel.Workbooks.Open(file_path)
-        sheet = workbook.Sheets(1)
-        workbook.Save()
-        esheet = pd.read_excel(file_path)
-        iter_range = list(esheet.loc[esheet["status"] == "not checked"].index)
-    else:
-        print("New xl")
-        workbook = excel.Workbooks.Add()
-        sheet = workbook.Sheets(1)
-        creds["status"] = "not checked"
-        creds["daily dono"] = ""
-        creds["dimensional trials"] = ""
-        creds["oldman"] = ""
-        creds["supply run"] = ""
-        # creds['supply run 2'] = ""
-        creds["debug"] = ""
-
-        for col_num, column_name in enumerate(creds.columns, start=1):
-            sheet.Cells(1, col_num).Value = column_name
-        for row_num, row in enumerate(creds.values, start=2):
-            for col_num, value in enumerate(row, start=1):
-                sheet.Cells(row_num, col_num).Value = value
-        workbook.SaveAs(file_path)
-
-    print(df)
-
-    excel.Visible = True
-    win2 = pw.getWindowsWithTitle(file_name + " - Excel")
-    excel_win = win2[0]
-    excel_win.moveTo(0, 490)
-
+async def main():
     print("\nGo to login screen where you will input the email and password")
     input("Press any key to continue after 3 seconds...\n")
 
     sleep(3)
 
-    iter_range = range(n)
+    ITER_RANGE = range(n)
     pyautogui.PAUSE = 1.0  # 1.0 #0.5
+
     try:
-        for i in iter_range:
-            t_start = time.time()
+        # Create a shared queue with all accounts
+        account_queue = queue.Queue()
+        total_accounts = len(ITER_RANGE)
+        num_windows = len(win_instances)
 
-            main_win.run_for_account(i)
+        # Add all accounts to the queue
+        for acc_ind in ITER_RANGE:
+            account_queue.put(acc_ind)
 
-            workbook.Save()
+        print(f"Total accounts: {total_accounts}")
+        print(f"Number of windows: {num_windows}")
+        print("All accounts added to shared queue")
+        print(
+            "Windows will process accounts as they become available (dynamic load balancing)"
+        )
 
-            print(f"Finished after {t_start - time.time()} secs")
+        # Create tasks for all windows to process the queue concurrently
+        tasks = []
+        for inst in win_instances:
+            task = asyncio.create_task(inst.process_queue(account_queue))
+            tasks.append(task)
+
+        # Wait for all windows to finish processing
+        await asyncio.gather(*tasks)
 
     except KeyboardInterrupt:
         print("Interrupt signal detected!")
-        workbook.Save()
-        # os.system("shutdown /s /t 1")
-        # excel.Visible = True
+        WORKBOOK.Save()
+
+    WORKBOOK.Save()  # type: ignore
 
 
-workbook.Save()  # type: ignore
-# os.system("shutdown /s /t 1")
-# excel.Visible = True
+if __name__ == "__main__":
+    asyncio.run(main())
