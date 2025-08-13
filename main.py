@@ -538,7 +538,7 @@ class Window:
 
         print("Clicking login")
         await self.findClick(Template.LOGIN)
-        sleep(1.0)
+        await asyncio.sleep(1.0)
 
         await self.findClick(Template.ENTER)
 
@@ -577,7 +577,7 @@ class Window:
 
         print("Waiting for origin_reso to disappear")
         await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
-        sleep(7)
+        await asyncio.sleep(7)
 
         debug_update(acc_ind, "Entered Game")
 
@@ -585,7 +585,7 @@ class Window:
 
         print("Clicking uid_text")
         await self.findClick(Template.UID_TEXT, max_tries=10)
-        sleep(0.5)
+        await asyncio.sleep(0.5)
 
         print("Cancelling pass window, if exists")
         await self.findClick(Template.PASS_CANCEL, max_tries=2)
@@ -673,7 +673,7 @@ class Window:
 
             print("Clicking back_button again")
             await self.findClick(Template.BACK_BUTTON, threshold=0.75)
-            sleep(1)
+            await asyncio.sleep(1)
 
         if BYGONE_MISSION:
             print("Objective: Bygone Phantasm")
@@ -728,10 +728,10 @@ class Window:
             await self.findClick(Template.OK_BUTTON)
 
             print("Sleeping for 7 seconds")
-            sleep(7)
+            await asyncio.sleep(7)
 
             await self.findWait(Template.UID_TEXT)
-            sleep(1)
+            await asyncio.sleep(1)
 
         # main_win.findWait(sword_icon,threshold=0.75)
         # print("Clicking recommended_button")
@@ -930,7 +930,7 @@ class Window:
 
         print("Waiting for origin_reso to disappear")
         await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
-        sleep(2)
+        await asyncio.sleep(2)
 
     async def process_queue(self, account_queue: queue.Queue):
         while not account_queue.empty():
