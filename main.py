@@ -524,14 +524,14 @@ class Window:
 
         print("Clicking next_step")
         await self.findClick(Template.NEXT_STEP)
-        while (
-            await self.findWait(Template.NEXT_STEP, threshold=0.9, max_tries=2)
-            == "FOUND"
-        ):
-            print("Clicking next_step again")
-            await self.findClick(Template.NEXT_STEP, threshold=0.9, max_tries=2)
-            sleep(1)
-        sleep(2)
+        # while (
+        #     await self.findWait(Template.NEXT_STEP, threshold=0.9, max_tries=2)
+        #     == "FOUND"
+        # ):
+        #     print("Clicking next_step again")
+        #     await self.findClick(Template.NEXT_STEP, threshold=0.9, max_tries=2)
+        #     sleep(1)
+        # sleep(2)
 
         print(f"Typing password for index {acc_ind}")
         await self._type(df.password[acc_ind])
