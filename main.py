@@ -225,7 +225,9 @@ class InputRequest:
 
     def execute(self, current_window: int):
         if current_window != self.window.id:
+            pyautogui.keyDown("alt")
             pyautogui.click(self.window.size0[0] + 15, self.window.size0[1] + 1)
+            pyautogui.keyUp("alt")
 
         match self.request_type:
             case RequestType.CLICK:
