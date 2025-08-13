@@ -3,6 +3,7 @@ import codecs
 import os
 import queue
 import sys
+from asyncio.tasks import Task
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -254,6 +255,7 @@ class RimInputScheduler:
     current_window: int = field(init=False, default=-1)
 
     priority_window: Optional[int] = field(init=False, default=None)
+    _task: Task = field(init=False)
 
     async def start(self):
         self.running = True
