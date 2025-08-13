@@ -236,10 +236,11 @@ class InputRequest:
                 pyautogui.write(*self.args)
             case RequestType.SHORTCUT:
                 # pyautogui.shortcut(*self.args)
-                pyautogui.keyDown(*self.args[0])
-                pyautogui.press(*self.args[1])
-                pyautogui.keyUp(*self.args[0])
+                # pyautogui.keyDown(*self.args[0])
+                # pyautogui.press(*self.args[1])
+                # pyautogui.keyUp(*self.args[0])
 
+                pyautogui.hotkey(*self.args)
             case _:
                 raise ValueError(f"Invalid request type {self.request_type}")
 
@@ -318,7 +319,9 @@ class RimInputScheduler:
                     else:
                         # Execute normal stuff
                         await self.main_queue.put(req)
-                        print("[PRCESSOR] Executing task")
+                        print(
+                            f"[PRCESSOR] Executing task: {req.request_type} {req.args}"
+                        )
                         continue
 
             await asyncio.sleep(0.5)
