@@ -660,11 +660,16 @@ class Window:
             print("Clicking artificial_island_icon")
             await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
 
+            await self._exit_priority()
+
             print("Waiting for oldman_icon")
             await self.findWait(Template.OLDMAN_ICON, max_tries=3)
 
             print("Waiting for oldman_icon (status check)")
             oldman_status_ = await self.findWait(Template.OLDMAN_ICON, max_tries=2)
+
+            await self._enter_priority()
+
             print("DEBUG: oldman", oldman_status_)
             oldman_update(acc_ind, oldman_status_)
 
