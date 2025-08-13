@@ -22,7 +22,7 @@ from template import Template
 # ============ Initial Setup ============
 pyautogui.FAILSAFE = False
 
-NORMAL_PAUSE = 1.0
+NORMAL_PAUSE = 0.5
 FAST_PAUSE = 2 / 60
 
 pyautogui.PAUSE = NORMAL_PAUSE
@@ -322,9 +322,9 @@ class RimInputScheduler:
                     else:
                         # move back non-priority window task
                         await self.incoming_queue.put(req)
-                        print(
-                            f"[PROCESSOR] Moving back non-priority task with id {req.window.id}"
-                        )
+                        # print(
+                        #     f"[PROCESSOR] Moving back non-priority task with id {req.window.id}"
+                        # )
 
                         move_back_count += 1
                         continue
