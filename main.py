@@ -22,7 +22,7 @@ from template import Template
 # ============ Initial Setup ============
 pyautogui.FAILSAFE = False
 
-NORMAL_PAUSE = 0.5
+NORMAL_PAUSE = 1.0
 FAST_PAUSE = 2 / 60
 
 pyautogui.PAUSE = NORMAL_PAUSE
