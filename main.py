@@ -282,7 +282,7 @@ class RimInputScheduler:
                 req = await self.incoming_queue.get()
 
                 # In priority mode
-                if self.priority_window:
+                if self.priority_window is not None:
                     if (req.request_type == RequestType.PRIORITY_END) and (
                         self.priority_window == self.current_window
                     ):
