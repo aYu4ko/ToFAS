@@ -958,8 +958,6 @@ async def main():
 
     sleep(3)
 
-    ITER_RANGE = range(n)
-
     try:
         # Start the input scheduler
         print("[MAIN] Starting input scheduler...")
