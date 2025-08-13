@@ -920,7 +920,8 @@ class Window:
 
         print("Clicking switch_acc_button")
         await self.findClick(Template.SWITCH_ACC_BUTTON)
-        # sleep(2)
+
+        await asyncio.sleep(1)
 
         print("Clicking switch_acc_text")
         await self.findClick(Template.SWITCH_ACC_TEXT)
