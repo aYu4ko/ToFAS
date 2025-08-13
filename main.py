@@ -273,6 +273,7 @@ class RimInputScheduler:
             await self._task
 
     async def _processor(self):
+        move_back_count = 0
         while self.running:
             # Process main queue
             if not self.main_queue.empty():
@@ -284,6 +285,9 @@ class RimInputScheduler:
             # Process incoming queue
             # Note that this is only processed when main queue is empty
             if not self.incoming_queue.empty():
+                if move_back_count >= self.incoming_queue.qsize():
+                    raise ValueError("Move back loop detected!")
+
                 req = await self.incoming_queue.get()
 
                 # In priority mode
@@ -294,17 +298,25 @@ class RimInputScheduler:
                         # End priority
                         self.priority_window = None
                         req.event.set()
-                        print("[PRCESSOR] Ending Priority Request")
+                        print("[PROCESSOR] Ending Priority Request")
+
+                        move_back_count = 0
                         continue
                     elif self.priority_window == req.window.id:
                         # executing on priority window
                         await self.main_queue.put(req)
-                        print("[PRCESSOR] Executing priority task")
+                        print("[PROCESSOR] Executing priority task")
+
+                        move_back_count = 0
                         continue
                     else:
-                        # move back non-priority window
+                        # move back non-priority window task
                         await self.incoming_queue.put(req)
-                        print("[PRCESSOR] Moving back non-priority task")
+                        print(
+                            f"[PROCESSOR] Moving back non-priority task with id {req.window.id}"
+                        )
+
+                        move_back_count += 1
                         continue
 
                 else:
@@ -314,14 +326,18 @@ class RimInputScheduler:
                         # Start priority mode
                         self.priority_window = req.window.id
                         req.event.set()
-                        print("[PRCESSOR] Starting priority")
+                        print(f"[PROCESSOR] Starting priority for {req.window.id}")
+
+                        move_back_count = 0
                         continue
                     else:
                         # Execute normal stuff
                         await self.main_queue.put(req)
                         print(
-                            f"[PRCESSOR] Executing task: {req.request_type} {req.args}"
+                            f"[PROCESSOR] Executing task: {req.request_type} {req.args}"
                         )
+
+                        move_back_count = 0
                         continue
 
             await asyncio.sleep(0.5)
