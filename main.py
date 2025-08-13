@@ -289,14 +289,17 @@ class RimInputScheduler:
                         # End priority
                         self.priority_window = None
                         req.event.set()
+                        print("[PRCESSOR] Ending Priority Request")
                         continue
                     elif self.priority_window == req.window.id:
                         # executing on priority window
                         await self.main_queue.put(req)
+                        print("[PRCESSOR] Executing priority task")
                         continue
                     else:
                         # move back non-priority window
                         await self.incoming_queue.put(req)
+                        print("[PRCESSOR] Moving back non-priority task")
                         continue
 
                 else:
@@ -306,10 +309,12 @@ class RimInputScheduler:
                         # Start priority mode
                         self.priority_window = req.window.id
                         req.event.set()
+                        print("[PRCESSOR] Starting priority")
                         continue
                     else:
                         # Execute normal stuff
                         await self.main_queue.put(req)
+                        print("[PRCESSOR] Executing task")
                         continue
 
             await asyncio.sleep(0.5)
