@@ -21,7 +21,11 @@ from template import Template
 
 # ============ Initial Setup ============
 pyautogui.FAILSAFE = False
-pyautogui.PAUSE = 1.0
+
+NORMAL_PAUSE = 1.0
+FAST_PAUSE = 2 / 60
+
+pyautogui.PAUSE = NORMAL_PAUSE
 
 show_d = False
 dir_path = sys.path[0]
@@ -225,9 +229,11 @@ class InputRequest:
 
     def execute(self, current_window: int):
         if current_window != self.window.id:
+            pyautogui.PAUSE = FAST_PAUSE
             pyautogui.keyDown("alt")
             pyautogui.click(self.window.size0[0] + 15, self.window.size0[1] + 1)
             pyautogui.keyUp("alt")
+            pyautogui.PAUSE = NORMAL_PAUSE
 
         match self.request_type:
             case RequestType.CLICK:
