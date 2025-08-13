@@ -507,12 +507,12 @@ class Window:
         return val
 
     async def run_for_account(self, acc_ind: int):
+        await self._enter_priority()
+
         print("Clicking other_login")
         await self.findClick(Template.OTHER_LOGIN)
 
         print("Clicking email_signin")
-        # Enter priority mode for multi-step action
-        await self._enter_priority()
 
         # Click email signin with priority
         await self.findClick(Template.EMAIL_SIGNIN)
@@ -535,8 +535,6 @@ class Window:
 
         print(f"Typing password for index {acc_ind}")
         await self._type(df.password[acc_ind])
-
-        await self._exit_priority()
 
         print("Clicking login")
         await self.findClick(Template.LOGIN)
@@ -571,6 +569,8 @@ class Window:
         print("Clicking enter")
         await self.findClick(Template.ENTER)
 
+        await self._exit_priority()
+
         debug_update(acc_ind, "Entering Game")
         print("Waiting for origin_reso to appear")
         await self.findWait(Template.ORIGIN_RESO, max_tries=5)
@@ -580,6 +580,9 @@ class Window:
         sleep(7)
 
         debug_update(acc_ind, "Entered Game")
+
+        await self._enter_priority()
+
         print("Clicking uid_text")
         await self.findClick(Template.UID_TEXT, max_tries=10)
         sleep(0.5)
@@ -919,6 +922,8 @@ class Window:
 
         status_update(acc_ind, "checked")
         debug_update(acc_ind, "")
+
+        await self._exit_priority()
 
         print("Waiting for origin_reso to appear")
         await self.findWait(Template.ORIGIN_RESO, max_tries=5)
