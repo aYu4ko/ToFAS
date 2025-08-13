@@ -236,11 +236,11 @@ class InputRequest:
                 pyautogui.write(*self.args)
             case RequestType.SHORTCUT:
                 # pyautogui.shortcut(*self.args)
-                # pyautogui.keyDown(*self.args[0])
-                # pyautogui.press(*self.args[1])
-                # pyautogui.keyUp(*self.args[0])
+                pyautogui.keyDown(self.args[0])
+                pyautogui.press(self.args[1])
+                pyautogui.keyUp(self.args[0])
 
-                pyautogui.hotkey(*self.args)
+                # pyautogui.hotkey(*self.args)
             case _:
                 raise ValueError(f"Invalid request type {self.request_type}")
 
