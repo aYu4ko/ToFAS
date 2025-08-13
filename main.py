@@ -949,7 +949,7 @@ async def main():
         print("[MAIN] Running window tasks and input scheduler concurrently...")
 
         # Run both window tasks and input scheduler task concurrently
-        all_tasks = tasks + [input_scheduler.scheduler_task]
+        all_tasks = tasks + [input_scheduler._task]
         await asyncio.gather(*all_tasks)
 
         print("[MAIN] All tasks completed")
