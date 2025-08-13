@@ -177,7 +177,7 @@ async def findElement(
         else:
             threshold -= leniency
 
-        print(f"DEBUG: max_val is {round(max_val, 5)} (thresh: {round(threshold, 5)})")
+        print("DEBUG: max_val is {round(max_val, 5)} (thresh: {round(threshold, 5)})")
         if max_val <= threshold:
             tries += 1
             if tries >= max_tries:
@@ -287,6 +287,8 @@ class RimInputScheduler:
             if not self.incoming_queue.empty():
                 if move_back_count >= max(self.incoming_queue.qsize(), 5):
                     raise ValueError("Move back loop detected!")
+                elif move_back_count:
+                    await asyncio.sleep(1)
 
                 req = await self.incoming_queue.get()
 
@@ -652,7 +654,7 @@ class Window:
 
             print("Waiting for oldman_icon (status check)")
             oldman_status_ = await self.findWait(Template.OLDMAN_ICON, max_tries=2)
-            print("DEBUG: oldman", oldman_status_)
+            print(f"{self.id}: oldman", oldman_status_)
             oldman_update(acc_ind, oldman_status_)
 
             print("Clicking back_button")
