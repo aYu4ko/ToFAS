@@ -56,6 +56,17 @@ CLAIM_MAIL = False
 redeem_code = "624star"
 
 
+# ============ Pyautogui Helpers ============
+
+
+class Pyautogui:
+    @staticmethod
+    def click():
+        pass
+
+    pass
+
+
 # ============ Window Functions ============
 
 window_title = "Tower of Fantasy  "
@@ -130,11 +141,6 @@ def preassign(
         threshold = -threshold
     max_val = -1.0
     return threshold, max_val, 0
-
-
-def takeScreenshot(window_size=(0, 0, 720, 480), image_name="temp.tmppng"):
-    im = pyautogui.screenshot(region=window_size)
-    im.save(image_name, format="PNG")
 
 
 def takeScreenshotDirect(window_size=(0, 0, 720, 480)):
