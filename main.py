@@ -25,7 +25,7 @@ pyautogui.FAILSAFE = False
 NORMAL_PAUSE = 0.5
 FAST_PAUSE = 2 / 60
 
-pyautogui.PAUSE = NORMAL_PAUSE
+pyautogui.PAUSE = FAST_PAUSE
 
 show_d = False
 dir_path = sys.path[0]
@@ -224,11 +224,9 @@ class InputRequest:
 
     def execute(self, current_window: int):
         if current_window != self.window.id:
-            pyautogui.PAUSE = FAST_PAUSE
             pyautogui.keyDown("alt")
             pyautogui.click(self.window.size0[0] + 15, self.window.size0[1] + 1)
             pyautogui.keyUp("alt")
-            pyautogui.PAUSE = NORMAL_PAUSE
 
         match self.request_type:
             case RequestType.CLICK:
@@ -239,7 +237,6 @@ class InputRequest:
                 pyautogui.write(*self.args)
             case RequestType.SHORTCUT:
                 # pyautogui.shortcut(*self.args)
-
                 pyautogui.keyDown(self.args[0])
                 pyautogui.press(self.args[1])
                 pyautogui.keyUp(self.args[0])
@@ -435,24 +432,28 @@ class Window:
 
         await input_scheduler.schedule(req)
         await req.event.wait()
+        await asyncio.sleep(NORMAL_PAUSE)
 
     async def _type(self, text: str):
         req = InputRequest(RequestType.TYPE, (text,), self)
 
         await input_scheduler.schedule(req)
         await req.event.wait()
+        await asyncio.sleep(NORMAL_PAUSE)
 
     async def _press(self, key: str):
         req = InputRequest(RequestType.KEY, (key,), self)
 
         await input_scheduler.schedule(req)
         await req.event.wait()
+        await asyncio.sleep(NORMAL_PAUSE)
 
     async def _shortcut(self, *args):
         req = InputRequest(RequestType.SHORTCUT, args, self)
 
         await input_scheduler.schedule(req)
         await req.event.wait()
+        await asyncio.sleep(NORMAL_PAUSE)
 
     async def _enter_priority(self):
         req = InputRequest(RequestType.PRIORITY_START, (None,), self)
