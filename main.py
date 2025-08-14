@@ -238,7 +238,9 @@ class InputRequest:
             case RequestType.SHORTCUT:
                 # pyautogui.shortcut(*self.args)
                 pyautogui.keyDown(self.args[0])
+                sleep(FAST_PAUSE)
                 pyautogui.press(self.args[1])
+                sleep(FAST_PAUSE)
                 pyautogui.keyUp(self.args[0])
 
                 # pyautogui.hotkey(*self.args)
