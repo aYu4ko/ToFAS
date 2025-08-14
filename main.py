@@ -288,7 +288,7 @@ class RimInputScheduler:
             # Process incoming queue
             # Note that this is only processed when main queue is empty
             if not self.incoming_queue.empty():
-                if move_back_count >= 1000:
+                if move_back_count >= 2000:
                     raise ValueError("Move back loop detected!")
                 else:
                     await asyncio.sleep(0.1)
