@@ -578,7 +578,7 @@ class Window:
 
         debug_update(acc_ind, "Entered Game")
 
-        await self._enter_priority()
+        # await self._enter_priority()
 
         print("Clicking uid_text")
         await self.findClick(Template.UID_TEXT, max_tries=10)
@@ -657,7 +657,7 @@ class Window:
             print("Clicking artificial_island_icon")
             await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
 
-            await self._exit_priority()
+            # await self._exit_priority()
 
             print("Waiting for oldman_icon")
             await self.findWait(Template.OLDMAN_ICON, max_tries=3)
@@ -665,7 +665,7 @@ class Window:
             print("Waiting for oldman_icon (status check)")
             oldman_status_ = await self.findWait(Template.OLDMAN_ICON, max_tries=2)
 
-            await self._enter_priority()
+            # await self._enter_priority()
 
             print("DEBUG: oldman", oldman_status_)
             oldman_update(acc_ind, oldman_status_)
@@ -926,7 +926,7 @@ class Window:
         status_update(acc_ind, "checked")
         debug_update(acc_ind, "")
 
-        await self._exit_priority()
+        # await self._exit_priority()
 
         print("Waiting for origin_reso to appear")
         await self.findWait(Template.ORIGIN_RESO, max_tries=5)
