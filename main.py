@@ -56,17 +56,6 @@ CLAIM_MAIL = False
 redeem_code = "624star"
 
 
-# ============ Pyautogui Helpers ============
-
-
-class Pyautogui:
-    @staticmethod
-    def click():
-        pass
-
-    pass
-
-
 # ============ Window Functions ============
 
 window_title = "Tower of Fantasy  "
@@ -250,6 +239,7 @@ class InputRequest:
                 pyautogui.write(*self.args)
             case RequestType.SHORTCUT:
                 # pyautogui.shortcut(*self.args)
+
                 pyautogui.keyDown(self.args[0])
                 pyautogui.press(self.args[1])
                 pyautogui.keyUp(self.args[0])
