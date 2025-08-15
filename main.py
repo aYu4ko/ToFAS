@@ -935,8 +935,8 @@ class Window:
         await self.findWait(Template.ORIGIN_RESO, max_tries=5)
 
         print("Waiting for origin_reso to disappear")
-        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
-        await asyncio.sleep(2)
+        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=100)
+        await asyncio.sleep(1)
 
     async def process_queue(self, account_queue: queue.Queue):
         self.running = True
