@@ -406,6 +406,7 @@ class Window:
     _w = 720
     _h = 480
     prev_server = None
+    running = False
 
     win: pw.Win32Window
 
@@ -938,6 +939,7 @@ class Window:
         await asyncio.sleep(2)
 
     async def process_queue(self, account_queue: queue.Queue):
+        self.running = True
         while not account_queue.empty():
             try:
                 # Get next account from queue (non-blocking)
@@ -950,6 +952,7 @@ class Window:
                 # Queue is empty, we're done
                 print(f"Window {self.id + 1} finished - no more accounts in queue")
                 break
+        self.running = False
 
 
 win_instances = [
