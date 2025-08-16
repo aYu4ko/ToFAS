@@ -35,11 +35,13 @@ formatted_date = date.strftime("%d%b%Y")
 formatted_time = float(date.strftime("%H.%M"))
 thresh_factor = 0.95
 
-file_name = "tof" + formatted_date + ".xlsx"
+# CSV file paths
+file_name = "tof" + formatted_date + ".csv"
 file_path = os.path.join(dir_path, file_name)
-creds_path = os.path.join(dir_path, "accounts.xlsx")
+creds_path = os.path.join(dir_path, "accounts.csv")
 
-df = pd.read_excel(creds_path)
+# Read account data from CSV
+df = pd.read_csv(creds_path)
 creds = df[["ign"]]
 n = len(creds)
 
@@ -54,6 +56,9 @@ REDEEM_REWARDS = False
 CLAIM_MAIL = False
 
 redeem_code = "624star"
+
+# Global DataFrame for progress tracking
+progress_df: Optional[pd.DataFrame] = None
 
 
 # ============ Window Functions ============
@@ -87,35 +92,64 @@ def checkTime():
         )
 
 
-# ============ Excel Helper Functions ============
+# ============ CSV Helper Functions ============
+
+
+def save_progress():
+    """Save the progress DataFrame to CSV file"""
+    global progress_df
+    if progress_df is not None:
+        progress_df.to_csv(file_path, index=False)
+        print(f"Progress saved to {file_path}")
 
 
 def status_update(i: int, value: str):
-    sheet.Cells(i + 2, 2).Value = value
+    global progress_df
+    if progress_df is not None:
+        progress_df.loc[i, "status"] = value
+        save_progress()
 
 
 def daily_dono_update(i: int, value: str):
-    sheet.Cells(i + 2, 3).Value = value
+    global progress_df
+    if progress_df is not None:
+        progress_df.loc[i, "daily dono"] = value
+        save_progress()
 
 
 def dimensional_trials_update(i: int, value: str):
-    sheet.Cells(i + 2, 4).Value = value
+    global progress_df
+    if progress_df is not None:
+        progress_df.loc[i, "dimensional trials"] = value
+        save_progress()
 
 
 def oldman_update(i: int, value: str):
-    sheet.Cells(i + 2, 5).Value = value
+    global progress_df
+    if progress_df is not None:
+        progress_df.loc[i, "oldman"] = value
+        save_progress()
 
 
 def supply_run_update(i: int, value: str):
-    sheet.Cells(i + 2, 6).Value = value
+    global progress_df
+    if progress_df is not None:
+        progress_df.loc[i, "supply run"] = value
+        save_progress()
 
 
 def supply_run_2_update(i: int, value: str):
-    sheet.Cells(i + 2, 0).Value = value
+    global progress_df
+    if progress_df is not None:
+        progress_df.loc[i, "supply run 2"] = value
+        save_progress()
 
 
 def debug_update(i: int, value: str):
-    sheet.Cells(i + 2, 7).Value = value
+    global progress_df
+    if progress_df is not None:
+        progress_df.loc[i, "debug"] = value
+        save_progress()
 
 
 # ============ Screenshot & Detection ============
@@ -359,47 +393,32 @@ if not sys.platform.startswith("win"):
 
 checkTime()
 
-# SETUP EXCEL
-import win32com.client  # type: ignore  # noqa: E402
-
+# SETUP CSV
 os.chdir(dir_path)
-excel = win32com.client.Dispatch("Excel.Application")
 
 if os.path.exists(file_path):
-    print("The xl already exist")
-    WORKBOOK = excel.Workbooks.Open(file_path)
-    sheet = WORKBOOK.Sheets(1)
-    WORKBOOK.Save()
-    esheet = pd.read_excel(file_path)
-    ITER_RANGE = list(esheet.loc[esheet["status"] == "not checked"].index)
+    print("The CSV already exists")
+    progress_df = pd.read_csv(file_path)
+    ITER_RANGE = list(progress_df.loc[progress_df["status"] == "not checked"].index)
 else:
-    print("New xl")
-    WORKBOOK = excel.Workbooks.Add()
-    sheet = WORKBOOK.Sheets(1)
-    creds["status"] = "not checked"
-    creds["daily dono"] = ""
-    creds["dimensional trials"] = ""
-    creds["oldman"] = ""
-    creds["supply run"] = ""
-    # creds['supply run 2'] = ""
-    creds["debug"] = ""
+    print("New CSV")
+    # Create progress DataFrame with all required columns
+    progress_df = creds.copy()
+    progress_df["status"] = "not checked"
+    progress_df["daily dono"] = ""
+    progress_df["dimensional trials"] = ""
+    progress_df["oldman"] = ""
+    progress_df["supply run"] = ""
+    # progress_df["supply run 2"] = ""
+    progress_df["debug"] = ""
 
-    for col_num, column_name in enumerate(creds.columns, start=1):
-        sheet.Cells(1, col_num).Value = column_name
-    for row_num, row in enumerate(creds.values, start=2):
-        for col_num, value in enumerate(row, start=1):
-            sheet.Cells(row_num, col_num).Value = value
-    WORKBOOK.SaveAs(file_path)
-
+    # Save initial CSV
+    progress_df.to_csv(file_path, index=False)
     ITER_RANGE = range(n)
 
 print(df)
-
-excel.Visible = True
-win2 = pw.getWindowsWithTitle(file_name + " - Excel")
-excel_win = win2[0]
-excel_win.moveTo(0, 490)
-# SETUP EXCEL END
+print(f"Progress tracking initialized with {len(ITER_RANGE)} accounts to process")
+# SETUP CSV END
 
 
 class Window:
@@ -946,7 +965,6 @@ class Window:
                 acc_ind = account_queue.get_nowait()
                 print(f"Window {self.id + 1} processing account {acc_ind}")
                 await self.run_for_account(acc_ind)
-                WORKBOOK.Save()
                 print(f"Window {self.id + 1} completed account {acc_ind}")
             except queue.Empty:
                 # Queue is empty, we're done
@@ -1005,12 +1023,12 @@ async def main():
 
     except KeyboardInterrupt:
         print("Interrupt signal detected!")
-        WORKBOOK.Save()
+        save_progress()
     finally:
         # Stop the input scheduler
         await input_scheduler.stop()
 
-    WORKBOOK.Save()  # type: ignore
+    save_progress()
 
 
 if __name__ == "__main__":
