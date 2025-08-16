@@ -271,13 +271,11 @@ class InputRequest:
                 pyautogui.write(*self.args)
             case RequestType.SHORTCUT:
                 # pyautogui.shortcut(*self.args)
-                sleep(FAST_PAUSE)
                 pyautogui.keyDown(self.args[0])
                 sleep(FAST_PAUSE)
                 pyautogui.press(self.args[1])
                 sleep(FAST_PAUSE)
                 pyautogui.keyUp(self.args[0])
-                sleep(FAST_PAUSE)
 
                 # pyautogui.hotkey(*self.args)
             case _:
@@ -498,7 +496,7 @@ class Window:
         invert_threshold: bool = False,
         leniency: float = 0,
         max_tries: int = 999,
-    ):
+    ) -> bool:
         loc, val = await findElement(
             self.size,
             img_list,
@@ -510,6 +508,8 @@ class Window:
         if val == "FOUND":
             click_x, click_y = self.size0 + loc
             await self._click(click_x, click_y)
+            return True
+        return False
 
     async def findWait(
         self,
@@ -675,8 +675,11 @@ class Window:
             # pyautogui.hotkey('alt', '3')
             # main_win.findClick(Template.SWORD_ICON,threshold=0.75)
 
-            print("Clicking casual_tab")
-            await self.findClick(Template.CASUAL_TAB)
+            while not await self.findClick(Template.CASUAL_TAB, max_tries=1):
+                print("Clicking casual_tab recursively")
+                await self._shortcut("alt", "3")
+
+            # await self.findClick(Template.CASUAL_TAB)
 
             print("Clicking artificial_island_icon")
             await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
