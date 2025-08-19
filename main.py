@@ -675,9 +675,15 @@ class Window:
             # pyautogui.hotkey('alt', '3')
             # main_win.findClick(Template.SWORD_ICON,threshold=0.75)
 
-            while not await self.findClick(Template.CASUAL_TAB, max_tries=1):
+            sword_icon_tries = 0
+
+            while (
+                not await self.findClick(Template.CASUAL_TAB, max_tries=1)
+                and sword_icon_tries <= 3
+            ):
                 print("Clicking casual_tab recursively")
                 await self._shortcut("alt", "3")
+                sword_icon_tries += 1
 
             # await self.findClick(Template.CASUAL_TAB)
 
