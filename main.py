@@ -605,7 +605,9 @@ class Window:
         # await self._enter_priority()
 
         print("Clicking uid_text")
-        await self.findClick(Template.UID_TEXT, max_tries=10)
+        if not await self.findClick(Template.UID_TEXT, max_tries=10):
+            await self._click(self.x + int(0.5 * self.w), self.y + int(0.9 * self.h))
+
         await asyncio.sleep(0.5)
 
         print("Cancelling pass window, if exists")
