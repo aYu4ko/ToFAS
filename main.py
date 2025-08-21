@@ -1024,8 +1024,6 @@ async def main():
         # Start the input scheduler
         input_scheduler.set_queue_windows(account_queue, win_instances)
 
-        await input_scheduler.start()
-
         # Create a shared queue with all accounts
         total_accounts = len(ITER_RANGE)
         num_windows = len(win_instances)
@@ -1046,6 +1044,8 @@ async def main():
         for inst in win_instances:
             task = asyncio.create_task(inst.process_queue(account_queue))
             tasks.append(task)
+
+        await input_scheduler.start()
 
         print(f"[MAIN] Created {len(tasks)} window tasks")
         print("[MAIN] Running window tasks and input scheduler concurrently...")
