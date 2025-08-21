@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import pyautogui
 import pygetwindow as pw  # type: ignore
+import requests
 from dotenv import load_dotenv
 
 from template import Template
@@ -1059,6 +1060,15 @@ async def main():
         await input_scheduler.stop()
 
     save_progress()
+
+    with open(file_path, "rb") as f:
+        response = requests.post(
+            "https://rimbot.rimrim.de/omcsv",
+            headers={"x-auth-password": RIM_PASSWORD},
+            files={"file": f},
+        )
+
+        print(response.status_code, "\n", response.json())
 
 
 if __name__ == "__main__":
