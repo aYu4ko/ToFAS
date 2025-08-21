@@ -311,6 +311,11 @@ class RimInputScheduler:
     priority_window: Optional[int] = field(init=False, default=None)
     _task: Task = field(init=False)
 
+    _acc_queue: Optional[queue.Queue] = field(init=False, default=None)
+
+    def set_queue(self, queue: queue.Queue):
+        self._acc_queue = queue
+
     async def start(self):
         self.running = True
         self._task = asyncio.create_task(self._processor())
@@ -323,7 +328,7 @@ class RimInputScheduler:
 
     async def _processor(self):
         move_back_count = 0
-        while self.running:
+        while self.running and not self._acc_queue.empty():
             # Process main queue
             if not self.main_queue.empty():
                 req = await self.main_queue.get()
@@ -1010,13 +1015,13 @@ async def main():
     sleep(3)
 
     try:
+        account_queue = queue.Queue()
         # Start the input scheduler
-        print("[MAIN] Starting input scheduler...")
+        input_scheduler.set_queue(account_queue)
+
         await input_scheduler.start()
-        print("[MAIN] Input scheduler started successfully")
 
         # Create a shared queue with all accounts
-        account_queue = queue.Queue()
         total_accounts = len(ITER_RANGE)
         num_windows = len(win_instances)
 
