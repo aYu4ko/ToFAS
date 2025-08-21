@@ -623,6 +623,8 @@ class Window:
         # await self._enter_priority()
 
         print("Clicking uid_text")
+        await asyncio.sleep(1.0)
+
         if not await self.findClick(Template.UID_TEXT, max_tries=10):
             await self._click(self.x + int(0.5 * self.w), self.y + int(0.9 * self.h))
 
