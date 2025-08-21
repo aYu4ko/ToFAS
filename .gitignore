@@ -3,3 +3,4 @@ temp
 *.tmp
 uv.lock
 *.csv
+.env
