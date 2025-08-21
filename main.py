@@ -16,8 +16,20 @@ import numpy as np
 import pandas as pd
 import pyautogui
 import pygetwindow as pw  # type: ignore
+from dotenv import load_dotenv
 
 from template import Template
+
+# Check dotenv
+if os.path.exists(".env"):
+    load_dotenv()
+    RIM_PASSWORD = os.environ.get("RIM_PASSWORD", "")
+
+    if not RIM_PASSWORD:
+        raise ValueError("Environment variable 'RIM_PASSWORD' not set!")
+else:
+    raise ValueError(".env file missing!")
+
 
 # ============ Initial Setup ============
 pyautogui.FAILSAFE = False
