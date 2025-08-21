@@ -43,12 +43,12 @@ show_d = False
 dir_path = sys.path[0]
 
 date = datetime.now(ZoneInfo("Asia/Chongqing"))
-formatted_date = date.strftime("%d%b%Y")
+formatted_date = date.strftime("%Y-%m-%d")
 formatted_time = float(date.strftime("%H.%M"))
 thresh_factor = 0.95
 
 # CSV file paths
-file_name = "tof" + formatted_date + ".csv"
+file_name = formatted_date + ".csv"
 file_path = os.path.join(dir_path, file_name)
 creds_path = os.path.join(dir_path, "accounts.csv")
 
