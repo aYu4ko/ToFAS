@@ -313,9 +313,11 @@ class RimInputScheduler:
     _task: Task = field(init=False)
 
     _acc_queue: Optional[queue.Queue] = field(init=False, default=None)
+    _windows: Optional[list["Window"]] = field(init=False, default=None)
 
-    def set_queue(self, queue: queue.Queue):
+    def set_queue_windows(self, queue: queue.Queue, windows: list["Window"]):
         self._acc_queue = queue
+        self._windows = windows
 
     async def start(self):
         self.running = True
@@ -329,7 +331,7 @@ class RimInputScheduler:
 
     async def _processor(self):
         move_back_count = 0
-        while self.running and not self._acc_queue.empty():
+        while self.running and any([w.running for w in self._windows]):
             # Process main queue
             if not self.main_queue.empty():
                 req = await self.main_queue.get()
@@ -1020,7 +1022,7 @@ async def main():
     try:
         account_queue = queue.Queue()
         # Start the input scheduler
-        input_scheduler.set_queue(account_queue)
+        input_scheduler.set_queue_windows(account_queue, win_instances)
 
         await input_scheduler.start()
 
