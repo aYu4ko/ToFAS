@@ -565,6 +565,7 @@ class Window:
         await self._type(df.email[acc_ind])
 
         print("Clicking next_step")
+        await asyncio.sleep(0.5)
         await self.findClick(Template.NEXT_STEP)
         # while (
         #     await self.findWait(Template.NEXT_STEP, threshold=0.9, max_tries=2)
@@ -578,6 +579,8 @@ class Window:
         print(f"Typing password for index {acc_ind}")
         await asyncio.sleep(1)
         await self._type(df.password[acc_ind])
+
+        await asyncio.sleep(0.5)
 
         print("Clicking login")
         await self.findClick(Template.LOGIN)
