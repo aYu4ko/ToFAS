@@ -560,6 +560,7 @@ class Window:
 
         debug_update(acc_ind, "Logging")
         print(f"Typing email for index {acc_ind}")
+        await asyncio.sleep(1)
         # Type email with priority (ensures it goes to the right textbox)
         await self._type(df.email[acc_ind])
 
@@ -575,6 +576,7 @@ class Window:
         # sleep(2)
 
         print(f"Typing password for index {acc_ind}")
+        await asyncio.sleep(1)
         await self._type(df.password[acc_ind])
 
         print("Clicking login")
