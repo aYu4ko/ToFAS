@@ -456,9 +456,18 @@ class Window:
         # win: pw.Win32Window = windows[0]
         win.resizeTo(self._w, self._h)
 
-        # TODO: set ind to move window to diff location
+        match ind:
+            case 0:
+                win.moveTo(0, 0)
+            case 1:
+                win.moveTo(self._w, 0)
+            case 2:
+                win.moveTo(0, self._h)
+            case 3:
+                win.moveTo(self._w, self._h)
+            case _:
+                raise NotImplementedError("More than 4 windows not supported!")
 
-        win.moveTo(self._w * (ind), 0)
         x, y = win.left, win.top
         w, h = win.width, win.height
 
