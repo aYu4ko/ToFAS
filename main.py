@@ -608,6 +608,7 @@ class Window:
 
         await asyncio.sleep(1.0)
 
+        print("Clicking enter button to remove popup?")
         await self.findClick(Template.ENTER)
 
         # Check server of the account
@@ -628,6 +629,8 @@ class Window:
                     srv_template = Template.SERVER_ANIMUS
                 case _:
                     raise ValueError("")
+
+            print("Clicking the server")
             await self.findClick(
                 srv_template,
                 threshold=0.9,
