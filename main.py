@@ -660,7 +660,7 @@ class Window:
         # print("Clicking esc_button")
         # await self._press("esc")
 
-        while not self.findClick(
+        while not await self.findClick(
             [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2],
             max_tries=1,
         ):
