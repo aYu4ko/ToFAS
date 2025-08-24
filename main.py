@@ -724,13 +724,20 @@ class Window:
         # print("Clicking settings_button")
         # await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
 
+        while await self.findWait(
+            [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2], max_tries=2
+        ):
+            await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
+
         print("Clicking switch_acc_button")
-        await self.findClick(Template.SWITCH_ACC_BUTTON)
+        while await self.findWait(Template.SWITCH_ACC_BUTTON, max_tries=2):
+            await self.findClick(Template.SWITCH_ACC_BUTTON)
 
         await asyncio.sleep(1)
 
         print("Clicking switch_acc_text")
-        await self.findClick(Template.SWITCH_ACC_TEXT)
+        while await self.findWait(Template.SWITCH_ACC_TEXT, max_tries=2):
+            await self.findClick(Template.SWITCH_ACC_TEXT)
 
         status_update(acc_ind, "checked")
         debug_update(acc_ind, "")
