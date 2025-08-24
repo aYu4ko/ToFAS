@@ -666,8 +666,8 @@ class Window:
         ):
             await self._press("esc")
 
-        print("Clicking settings_button")
-        await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
+        # print("Clicking settings_button")
+        # await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
 
         print("Clicking switch_acc_button")
         await self.findClick(Template.SWITCH_ACC_BUTTON)
