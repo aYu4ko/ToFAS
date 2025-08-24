@@ -693,10 +693,10 @@ class Window:
 
         print("Clicking artificial_island_icon")
         while not await self.findWait(Template.ARTIFICIAL_ISLAND_ICON, max_tries=2):
-            await self.findClick(Template.CASUAL_TAB)
+            await self.findClick(Template.CASUAL_TAB, max_tries=1)
 
         while await self.findWait(Template.ARTIFICIAL_ISLAND_ICON, max_tries=2):
-            await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
+            await self.findClick(Template.ARTIFICIAL_ISLAND_ICON, max_tries=1)
 
         # await self._exit_priority()
 
@@ -735,17 +735,19 @@ class Window:
         while await self.findWait(
             [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2], max_tries=2
         ):
-            await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
+            await self.findClick(
+                [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2], max_tries=1
+            )
 
         print("Clicking switch_acc_button")
         while await self.findWait(Template.SWITCH_ACC_BUTTON, max_tries=2):
-            await self.findClick(Template.SWITCH_ACC_BUTTON)
+            await self.findClick(Template.SWITCH_ACC_BUTTON, max_tries=1)
 
         await asyncio.sleep(1)
 
         print("Clicking switch_acc_text")
         while await self.findWait(Template.SWITCH_ACC_TEXT, max_tries=2):
-            await self.findClick(Template.SWITCH_ACC_TEXT)
+            await self.findClick(Template.SWITCH_ACC_TEXT, max_tries=1)
 
         status_update(acc_ind, "checked")
         debug_update(acc_ind, "")
