@@ -688,7 +688,11 @@ class Window:
         # await self.findClick(Template.CASUAL_TAB)
 
         print("Clicking artificial_island_icon")
-        await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
+        while not await self.findWait(Template.ARTIFICIAL_ISLAND_ICON, max_tries=2):
+            await self.findClick(Template.CASUAL_TAB)
+
+        while await self.findWait(Template.ARTIFICIAL_ISLAND_ICON, max_tries=2):
+            await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
 
         # await self._exit_priority()
 
@@ -704,12 +708,12 @@ class Window:
         oldman_update(acc_ind, "FOUND" if oldman_status_ else "not found")
 
         print("Clicking back_button")
-        await self.findClick(Template.BACK_BUTTON, threshold=0.75)
+        await self.findClick(Template.BACK_BUTTON, threshold=0.75, max_tries=2)
 
         print("Clicking back_button again")
-        await self.findClick(Template.BACK_BUTTON, threshold=0.75)
-        await asyncio.sleep(1)
-        pass
+        await self.findClick(Template.BACK_BUTTON, threshold=0.75, max_tries=2)
+        # await asyncio.sleep(1)
+        # pass
 
     async def _do_logout(self, acc_ind: int):
         # print("Clicking esc_button")
