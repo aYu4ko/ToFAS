@@ -579,9 +579,6 @@ class Window:
         # Type email with priority (ensures it goes to the right textbox)
         await self._type(df.email[acc_ind])
 
-        await self._exit_priority()
-        await self._enter_priority()
-
         print("Clicking next_step")
         while await self.findWait(Template.NEXT_STEP, max_tries=2):
             await self.findClick(Template.NEXT_STEP, max_tries=1)
