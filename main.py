@@ -643,12 +643,12 @@ class Window:
         print("Clicking uid_text")
         await asyncio.sleep(1.0)
 
-        if not await self.findClick(Template.UID_TEXT, max_tries=10):
+        if not await self.findClick(Template.UID_TEXT, max_tries=5):
             await self._click(
                 self.size0[0] + int(0.5 * self.w), self.size0[1] + int(0.9 * self.h)
             )
 
-        if not await self.findClick(Template.UID_TEXT, max_tries=10):
+        if not await self.findClick(Template.UID_TEXT, max_tries=5):
             await self._click(
                 self.size0[0] + int(0.5 * self.w), self.size0[1] + int(0.9 * self.h)
             )
