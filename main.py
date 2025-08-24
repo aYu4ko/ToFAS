@@ -584,7 +584,9 @@ class Window:
 
         print("Clicking next_step")
         await asyncio.sleep(0.5)
-        await self.findClick(Template.NEXT_STEP)
+        while await self.findWait(Template.NEXT_STEP, max_tries=2):
+            await self.findClick(Template.NEXT_STEP)
+
         # while (
         #     await self.findWait(Template.NEXT_STEP, threshold=0.9, max_tries=2)
         #     == "FOUND"
@@ -601,7 +603,9 @@ class Window:
         await asyncio.sleep(0.5)
 
         print("Clicking login")
-        await self.findClick(Template.LOGIN)
+        while await self.findWait(Template.LOGIN, max_tries=2):
+            await self.findClick(Template.LOGIN)
+
         await asyncio.sleep(1.0)
 
         await self.findClick(Template.ENTER)
