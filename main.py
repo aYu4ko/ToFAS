@@ -648,6 +648,11 @@ class Window:
                 self.size0[0] + int(0.5 * self.w), self.size0[1] + int(0.9 * self.h)
             )
 
+        if not await self.findClick(Template.UID_TEXT, max_tries=10):
+            await self._click(
+                self.size0[0] + int(0.5 * self.w), self.size0[1] + int(0.9 * self.h)
+            )
+
         await asyncio.sleep(0.5)
 
         print("Cancelling pass window, if exists")
@@ -688,6 +693,52 @@ class Window:
         print("Waiting for origin_reso to disappear")
         await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=100)
         await asyncio.sleep(2)
+
+    async def _do_check_oldman(self, acc_ind: int):
+        print("Objective: Oldman")
+        debug_update(acc_ind, "Checking Oldman")
+
+        print("Clicking sword_icon")
+
+        await self._shortcut("alt", "3")
+        # pyautogui.hotkey('alt', '3')
+        # main_win.findClick(Template.SWORD_ICON,threshold=0.75)
+
+        sword_icon_tries = 0
+
+        while (
+            not await self.findClick(Template.CASUAL_TAB, max_tries=1)
+            and sword_icon_tries <= 3
+        ):
+            print("Clicking casual_tab recursively")
+            await self._shortcut("alt", "3")
+            sword_icon_tries += 1
+
+        # await self.findClick(Template.CASUAL_TAB)
+
+        print("Clicking artificial_island_icon")
+        await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
+
+        # await self._exit_priority()
+
+        print("Waiting for oldman_icon")
+        await self.findWait(Template.OLDMAN_ICON, max_tries=3)
+
+        print("Waiting for oldman_icon (status check)")
+        oldman_status_ = await self.findWait(Template.OLDMAN_ICON, max_tries=2)
+
+        # await self._enter_priority()
+
+        print("DEBUG: oldman", oldman_status_)
+        oldman_update(acc_ind, "FOUND" if oldman_status_ else "not found")
+
+        print("Clicking back_button")
+        await self.findClick(Template.BACK_BUTTON, threshold=0.75)
+
+        print("Clicking back_button again")
+        await self.findClick(Template.BACK_BUTTON, threshold=0.75)
+        await asyncio.sleep(1)
+        pass
 
     async def run_for_account(self, acc_ind: int):
         await self._do_login(acc_ind)
@@ -746,49 +797,7 @@ class Window:
             await self.findClick(Template.BACK_BUTTON, max_tries=2, threshold=0.75)
 
         if OLDMAN:
-            print("Objective: Oldman")
-            debug_update(acc_ind, "Checking Oldman")
-
-            print("Clicking sword_icon")
-
-            await self._shortcut("alt", "3")
-            # pyautogui.hotkey('alt', '3')
-            # main_win.findClick(Template.SWORD_ICON,threshold=0.75)
-
-            sword_icon_tries = 0
-
-            while (
-                not await self.findClick(Template.CASUAL_TAB, max_tries=1)
-                and sword_icon_tries <= 3
-            ):
-                print("Clicking casual_tab recursively")
-                await self._shortcut("alt", "3")
-                sword_icon_tries += 1
-
-            # await self.findClick(Template.CASUAL_TAB)
-
-            print("Clicking artificial_island_icon")
-            await self.findClick(Template.ARTIFICIAL_ISLAND_ICON)
-
-            # await self._exit_priority()
-
-            print("Waiting for oldman_icon")
-            await self.findWait(Template.OLDMAN_ICON, max_tries=3)
-
-            print("Waiting for oldman_icon (status check)")
-            oldman_status_ = await self.findWait(Template.OLDMAN_ICON, max_tries=2)
-
-            # await self._enter_priority()
-
-            print("DEBUG: oldman", oldman_status_)
-            oldman_update(acc_ind, "FOUND" if oldman_status_ else "not found")
-
-            print("Clicking back_button")
-            await self.findClick(Template.BACK_BUTTON, threshold=0.75)
-
-            print("Clicking back_button again")
-            await self.findClick(Template.BACK_BUTTON, threshold=0.75)
-            await asyncio.sleep(1)
+            await self._do_check_oldman(acc_ind)
 
         if BYGONE_MISSION:
             print("Objective: Bygone Phantasm")
