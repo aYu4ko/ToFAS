@@ -567,12 +567,14 @@ class Window:
         await asyncio.sleep(0.5)
 
         print("Clicking other_login")
-        await self.findClick(Template.OTHER_LOGIN)
+        while await self.findWait(Template.OTHER_LOGIN, max_tries=2):
+            await self.findClick(Template.OTHER_LOGIN)
 
         print("Clicking email_signin")
 
         # Click email signin with priority
-        await self.findClick(Template.EMAIL_SIGNIN)
+        while await self.findWait(Template.EMAIL_SIGNIN, max_tries=2):
+            await self.findClick(Template.EMAIL_SIGNIN)
 
         debug_update(acc_ind, "Logging")
         print(f"Typing email for index {acc_ind}")
