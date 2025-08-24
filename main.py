@@ -568,13 +568,13 @@ class Window:
 
         print("Clicking other_login")
         while await self.findWait(Template.OTHER_LOGIN, max_tries=2):
-            await self.findClick(Template.OTHER_LOGIN)
+            await self.findClick(Template.OTHER_LOGIN, max_tries=1)
 
         print("Clicking email_signin")
 
         # Click email signin with priority
         while await self.findWait(Template.EMAIL_SIGNIN, max_tries=2):
-            await self.findClick(Template.EMAIL_SIGNIN)
+            await self.findClick(Template.EMAIL_SIGNIN, max_tries=1)
 
         debug_update(acc_ind, "Logging")
         print(f"Typing email for index {acc_ind}")
@@ -585,7 +585,7 @@ class Window:
         print("Clicking next_step")
         await asyncio.sleep(0.5)
         while await self.findWait(Template.NEXT_STEP, max_tries=2):
-            await self.findClick(Template.NEXT_STEP)
+            await self.findClick(Template.NEXT_STEP, max_tries=1)
 
         # while (
         #     await self.findWait(Template.NEXT_STEP, threshold=0.9, max_tries=2)
@@ -604,7 +604,7 @@ class Window:
 
         print("Clicking login")
         while await self.findWait(Template.LOGIN, max_tries=2):
-            await self.findClick(Template.LOGIN)
+            await self.findClick(Template.LOGIN, max_tries=1)
 
         await asyncio.sleep(1.0)
 
