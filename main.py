@@ -562,17 +562,14 @@ class Window:
         return val
 
     async def _do_login(self, acc_ind: int):
-        await self._enter_priority()
-
         # await asyncio.sleep(0.5)
 
         print("Clicking other_login")
         while await self.findWait(Template.OTHER_LOGIN, max_tries=2):
             await self.findClick(Template.OTHER_LOGIN, max_tries=1)
 
+        await self._enter_priority()
         print("Clicking email_signin")
-
-        # Click email signin with priority
         while await self.findWait(Template.EMAIL_SIGNIN, max_tries=2):
             await self.findClick(Template.EMAIL_SIGNIN, max_tries=1)
 
@@ -581,6 +578,9 @@ class Window:
         await asyncio.sleep(0.5)
         # Type email with priority (ensures it goes to the right textbox)
         await self._type(df.email[acc_ind])
+
+        await self._exit_priority()
+        await self._enter_priority()
 
         print("Clicking next_step")
         while await self.findWait(Template.NEXT_STEP, max_tries=2):
@@ -607,6 +607,8 @@ class Window:
 
         print("Clicking enter button to remove popup?")
         await self.findClick(Template.ENTER)
+
+        await self._exit_priority()
 
         # Check server of the account
         srv = df.server[acc_ind]
@@ -636,8 +638,6 @@ class Window:
 
         print("Clicking enter")
         await self.findClick(Template.ENTER)
-
-        await self._exit_priority()
 
         debug_update(acc_ind, "Entering Game")
         print("Waiting for origin_reso to appear")
