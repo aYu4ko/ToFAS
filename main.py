@@ -665,39 +665,6 @@ class Window:
         print("Clicking anywhere text")
         await self.findClick(Template.ANYWHERE_TEXT, max_tries=2)
 
-    async def _do_logout(self, acc_ind: int):
-        # print("Clicking esc_button")
-        # await self._press("esc")
-
-        while not await self.findClick(
-            [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2],
-            max_tries=1,
-        ):
-            await self._press("esc")
-
-        # print("Clicking settings_button")
-        # await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
-
-        print("Clicking switch_acc_button")
-        await self.findClick(Template.SWITCH_ACC_BUTTON)
-
-        await asyncio.sleep(1)
-
-        print("Clicking switch_acc_text")
-        await self.findClick(Template.SWITCH_ACC_TEXT)
-
-        status_update(acc_ind, "checked")
-        debug_update(acc_ind, "")
-
-        # await self._exit_priority()
-
-        print("Waiting for origin_reso to appear")
-        await self.findWait(Template.ORIGIN_RESO, max_tries=5)
-
-        print("Waiting for origin_reso to disappear")
-        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=100)
-        await asyncio.sleep(2)
-
     async def _do_check_oldman(self, acc_ind: int):
         print("Objective: Oldman")
         debug_update(acc_ind, "Checking Oldman")
@@ -743,6 +710,39 @@ class Window:
         await self.findClick(Template.BACK_BUTTON, threshold=0.75)
         await asyncio.sleep(1)
         pass
+
+    async def _do_logout(self, acc_ind: int):
+        # print("Clicking esc_button")
+        # await self._press("esc")
+
+        while not await self.findClick(
+            [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2],
+            max_tries=1,
+        ):
+            await self._press("esc")
+
+        # print("Clicking settings_button")
+        # await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
+
+        print("Clicking switch_acc_button")
+        await self.findClick(Template.SWITCH_ACC_BUTTON)
+
+        await asyncio.sleep(1)
+
+        print("Clicking switch_acc_text")
+        await self.findClick(Template.SWITCH_ACC_TEXT)
+
+        status_update(acc_ind, "checked")
+        debug_update(acc_ind, "")
+
+        # await self._exit_priority()
+
+        print("Waiting for origin_reso to appear")
+        await self.findWait(Template.ORIGIN_RESO, max_tries=5)
+
+        print("Waiting for origin_reso to disappear")
+        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=100)
+        await asyncio.sleep(2)
 
     async def run_for_account(self, acc_ind: int):
         await self._do_login(acc_ind)
