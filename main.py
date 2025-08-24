@@ -657,8 +657,14 @@ class Window:
         await self.findClick(Template.ANYWHERE_TEXT, max_tries=2)
 
     async def _do_logout(self, acc_ind: int):
-        print("Clicking esc_button")
-        await self._press("esc")
+        # print("Clicking esc_button")
+        # await self._press("esc")
+
+        while not self.findClick(
+            [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2],
+            max_tries=1,
+        ):
+            await self._press("esc")
 
         print("Clicking settings_button")
         await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
