@@ -603,7 +603,7 @@ class Window:
         while await self.findWait(Template.LOGIN, max_tries=2):
             await self.findClick(Template.LOGIN, max_tries=1)
 
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.5)
 
         print("Clicking enter button to remove popup?")
         await self.findClick(Template.ENTER)
