@@ -564,7 +564,7 @@ class Window:
     async def _do_login(self, acc_ind: int):
         await self._enter_priority()
 
-        await asyncio.sleep(0.5)
+        # await asyncio.sleep(0.5)
 
         print("Clicking other_login")
         while await self.findWait(Template.OTHER_LOGIN, max_tries=2):
