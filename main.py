@@ -274,6 +274,7 @@ class InputRequest:
             pyautogui.keyDown("alt")
             pyautogui.click(self.window.size0[0] + 15, self.window.size0[1] + 1)
             pyautogui.keyUp("alt")
+            sleep(0.25)
 
         match self.request_type:
             case RequestType.CLICK:
