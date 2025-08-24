@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from time import sleep
-from typing import Callable, Literal, Optional
+from typing import Callable, Optional
 from zoneinfo import ZoneInfo
 
 import cv2
@@ -197,7 +197,7 @@ async def findElement(
     leniency: float = 0.0,
     max_tries: int = 100,
     fallback_func: Callable[[], None] = lambda: print("Failed to find object"),
-):
+) -> tuple[float, bool]:
     if not isinstance(img_list, list):
         img_list = [img_list]
 
@@ -228,11 +228,11 @@ async def findElement(
             tries += 1
             if tries >= max_tries:
                 fallback_func()
-                return max_loc, "not found"
+                return max_loc, False
             await asyncio.sleep(1.5)
 
     print("DEBUG: ACCEPTED")
-    return np.array(max_loc), "FOUND"
+    return max_loc, True
 
 
 def finalize():
@@ -272,9 +272,9 @@ class InputRequest:
     def execute(self, current_window: int):
         if current_window != self.window.id:
             pyautogui.keyDown("alt")
-            pyautogui.click(self.window.size0[0] + 15, self.window.size0[1] + 1)
+            pyautogui.click(self.window.size0[0] + 15, self.window.size0[1] + 3)
             pyautogui.keyUp("alt")
-            sleep(FAST_PAUSE)
+            # sleep(FAST_PAUSE)
 
         match self.request_type:
             case RequestType.CLICK:
@@ -332,6 +332,10 @@ class RimInputScheduler:
 
     async def _processor(self):
         move_back_count = 0
+
+        if self._windows is None:
+            raise ValueError("_windows cannot be None!")
+
         while self.running and any([w.running for w in self._windows]):
             # Process main queue
             if not self.main_queue.empty():
@@ -535,7 +539,7 @@ class Window:
             leniency=leniency,
             max_tries=max_tries,
         )
-        if val == "FOUND":
+        if val:
             click_x, click_y = self.size0 + loc
             await self._click(click_x, click_y)
             return True
@@ -547,7 +551,7 @@ class Window:
         threshold: float = 0.85,
         invert_threshold: bool = False,
         max_tries: int = 999,
-    ):
+    ) -> bool:
         _, val = await findElement(
             self.size,
             img_list,
@@ -557,7 +561,7 @@ class Window:
         )
         return val
 
-    async def run_for_account(self, acc_ind: int):
+    async def _do_login(self, acc_ind: int):
         await self._enter_priority()
 
         print("Clicking other_login")
@@ -635,15 +639,14 @@ class Window:
         await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
         await asyncio.sleep(7)
 
-        debug_update(acc_ind, "Entered Game")
-
-        # await self._enter_priority()
-
+    async def _do_remove_trash_ui(self):
         print("Clicking uid_text")
         await asyncio.sleep(1.0)
 
         if not await self.findClick(Template.UID_TEXT, max_tries=10):
-            await self._click(self.x + int(0.5 * self.w), self.y + int(0.9 * self.h))
+            await self._click(
+                self.size0[0] + int(0.5 * self.w), self.size0[1] + int(0.9 * self.h)
+            )
 
         await asyncio.sleep(0.5)
 
@@ -653,6 +656,40 @@ class Window:
         print("Clicking anywhere text")
         await self.findClick(Template.ANYWHERE_TEXT, max_tries=2)
 
+    async def _do_logout(self, acc_ind: int):
+        print("Clicking esc_button")
+        await self._press("esc")
+
+        print("Clicking settings_button")
+        await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
+
+        print("Clicking switch_acc_button")
+        await self.findClick(Template.SWITCH_ACC_BUTTON)
+
+        await asyncio.sleep(1)
+
+        print("Clicking switch_acc_text")
+        await self.findClick(Template.SWITCH_ACC_TEXT)
+
+        status_update(acc_ind, "checked")
+        debug_update(acc_ind, "")
+
+        # await self._exit_priority()
+
+        print("Waiting for origin_reso to appear")
+        await self.findWait(Template.ORIGIN_RESO, max_tries=5)
+
+        print("Waiting for origin_reso to disappear")
+        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=100)
+        await asyncio.sleep(2)
+
+    async def run_for_account(self, acc_ind: int):
+        await self._do_login(acc_ind)
+
+        debug_update(acc_ind, "Entered Game")
+
+        await self._do_remove_trash_ui()
+
         # pyautogui.press('tab') #Secret
 
         if LOGIN_REWARDS:
@@ -660,7 +697,8 @@ class Window:
             debug_update(acc_ind, "Supply Run")
 
             print("Clicking Gift Box Icon")
-            await input_scheduler.schedule_hotkey(self.id, "alt", "1")
+            # await input_scheduler.schedule_hotkey(self.id, "alt", "1")
+            await self._shortcut("alt", "1")
 
             print("Clicking special_operation")
             await self.findClick(Template.SPECIAL_OPERATION)
@@ -676,10 +714,7 @@ class Window:
             await self.findClick(Template.FINAL_SUPPLY_CLAIM, max_tries=2)
 
             print("Waiting for all_rewards_collected")
-            if (
-                await self.findWait(Template.ALL_REWARDS_COLLECTED, max_tries=2)
-                == "FOUND"
-            ):
+            if await self.findWait(Template.ALL_REWARDS_COLLECTED, max_tries=2):
                 print("All rewards collected")
                 supply_run_update(acc_ind, "Completed")
             else:
@@ -740,7 +775,7 @@ class Window:
             # await self._enter_priority()
 
             print("DEBUG: oldman", oldman_status_)
-            oldman_update(acc_ind, oldman_status_)
+            oldman_update(acc_ind, "FOUND" if oldman_status_ else "not found")
 
             print("Clicking back_button")
             await self.findClick(Template.BACK_BUTTON, threshold=0.75)
@@ -753,9 +788,11 @@ class Window:
             print("Objective: Bygone Phantasm")
             debug_update(acc_ind, "Bygone Mission")
             print("Pressing Enter")
-            await input_scheduler.schedule_key(self.id, "enter")
+            # await input_scheduler.schedule_key(self.id, "enter")
+            await self._press("enter")
             print("Clicking sword_icon")
-            await input_scheduler.schedule_hotkey(self.id, "alt", "3")
+            # await input_scheduler.schedule_hotkey(self.id, "alt", "3")
+            await self._shortcut("alt", "3")
             # pyautogui.hotkey('alt', '3')
             # main_win.findClick(Template.SWORD_ICON,threshold=0.75)
 
@@ -793,7 +830,8 @@ class Window:
             await self.findWait(Template.EXIT_BUTTON)
 
             print("Pressing ESC key")
-            await input_scheduler.schedule_key(self.id, "esc")
+            # await input_scheduler.schedule_key(self.id, "esc")
+            await self._press("esc")
 
             print("Clicking exit_button")
             await self.findClick(Template.EXIT_BUTTON)
@@ -813,7 +851,8 @@ class Window:
 
         if REDEEM_REWARDS:
             print("Clicking gift box icon")
-            await input_scheduler.schedule_hotkey(self.id, "alt", "1")
+            # await input_scheduler.schedule_hotkey(self.id, "alt", "1")
+            await self._shortcut("alt", "1")
 
             print("Clicking rewards button")
             await self.findClick(Template.REWARDS_BUTTON)
@@ -825,7 +864,8 @@ class Window:
             await self.findClick(Template.GIFT_CODE_BLOCK)
 
             print("Writing redeem code")
-            await input_scheduler.schedule_type(self.id, redeem_code)
+            # await input_scheduler.schedule_type(self.id, redeem_code)
+            await self._type(redeem_code)
 
             print("Clicking confirm button")
             await self.findClick(Template.CONFIRM_BUTTON)
@@ -838,15 +878,14 @@ class Window:
             debug_update(acc_ind, "Mia Kitchen Mission")
 
             print("Clicking sword_icon")
-            await input_scheduler.schedule_hotkey(self.id, "alt", "3")
+            # await input_scheduler.schedule_hotkey(self.id, "alt", "3")
+            await self._shortcut("alt", "3")
 
             print("Clicking recommended button")
             await self.findClick(Template.RECOMMENDED_BUTTON)
 
             print("Waiting for mia_kitchen_done_icon")
-            while (
-                await self.findWait(Template.MIA_KITCHEN_ICON, max_tries=2) == "FOUND"
-            ):
+            while await self.findWait(Template.MIA_KITCHEN_ICON, max_tries=2):
                 print("mia_kitchen_done_icon not found, retrying...")
                 print("Clicking mia_kitchen_icon")
                 await self.findClick(Template.MIA_KITCHEN_ICON)
@@ -872,7 +911,8 @@ class Window:
             sleep(0.5)
 
             print("Press Escape key")
-            await input_scheduler.schedule_key(self.id, "esc")
+            # await input_scheduler.schedule_key(self.id, "esc")
+            await self._press("esc")
 
             print("Clicking mail icon")
             await self.findClick(
@@ -902,7 +942,8 @@ class Window:
             debug_update(acc_ind, "Vitality Mission")
 
             print("Clicking sword_icon")
-            await input_scheduler.schedule_hotkey(self.id, "alt", "3")
+            # await input_scheduler.schedule_hotkey(self.id, "alt", "3")
+            await self._shortcut("alt", "3")
 
             print("Clicking recommended button")
             await self.findClick(Template.RECOMMENDED_BUTTON)
@@ -917,18 +958,12 @@ class Window:
             await self.findClick(Template.GO_BUTTON)
 
             print("Waiting for quick_battle_button")
-            if (
-                await self.findWait(Template.QUICK_BATTLE_BUTTON, max_tries=2)
-                == "FOUND"
-            ):
+            if await self.findWait(Template.QUICK_BATTLE_BUTTON, max_tries=2):
                 print("Clicking quick_battle_button")
                 await self.findClick(Template.QUICK_BATTLE_BUTTON)
 
             print("Checking for operation_success_text")
-            if (
-                await self.findWait(Template.OPERATION_SUCCESS_TEXT, max_tries=2)
-                == "FOUND"
-            ):
+            if await self.findWait(Template.OPERATION_SUCCESS_TEXT, max_tries=2):
                 print("Operation success found — marking as completed")
                 dimensional_trials_update(acc_ind, "Completed")
             else:
@@ -951,7 +986,8 @@ class Window:
             debug_update(acc_ind, "crew donations")
 
             print("Pressing Enter")
-            await input_scheduler.schedule_key(self.id, "enter")
+            # await input_scheduler.schedule_key(self.id, "enter")
+            await self._press("enter")
 
             print("Clicking esc_button")
             await self.findClick(Template.ESC_BUTTON, max_tries=2, threshold=0.75)
@@ -968,7 +1004,7 @@ class Window:
             print("Clicking donate button")
             await self.findClick(Template.DONATE_BUTTON)
 
-            if await self.findWait(Template.OK_BUTTON, max_tries=2) == "FOUND":
+            if await self.findWait(Template.OK_BUTTON, max_tries=2):
                 daily_dono_update(acc_ind, "Donated")
             else:
                 daily_dono_update(acc_ind, "Not Donated")
@@ -979,33 +1015,10 @@ class Window:
             await self.findClick(Template.BACK_BUTTON, threshold=0.75)
 
             print("Press Escape key")
-            await input_scheduler.schedule_key(self.id, "esc")
+            # await input_scheduler.schedule_key(self.id, "esc")
+            await self._press("esc")
 
-        print("Clicking esc_button")
-        await self._press("esc")
-
-        print("Clicking settings_button")
-        await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
-
-        print("Clicking switch_acc_button")
-        await self.findClick(Template.SWITCH_ACC_BUTTON)
-
-        await asyncio.sleep(1)
-
-        print("Clicking switch_acc_text")
-        await self.findClick(Template.SWITCH_ACC_TEXT)
-
-        status_update(acc_ind, "checked")
-        debug_update(acc_ind, "")
-
-        # await self._exit_priority()
-
-        print("Waiting for origin_reso to appear")
-        await self.findWait(Template.ORIGIN_RESO, max_tries=5)
-
-        print("Waiting for origin_reso to disappear")
-        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=100)
-        await asyncio.sleep(2)
+        await self._do_logout(acc_ind)
 
     async def process_queue(self, account_queue: queue.Queue):
         self.running = True
