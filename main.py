@@ -561,17 +561,19 @@ class Window:
         )
         return val
 
+    async def safeFindClick(self, template: np.ndarray | list[np.ndarray]):
+        while await self.findWait(template, max_tries=2):
+            await self.findClick(template, max_tries=1)
+
     async def _do_login(self, acc_ind: int):
         # await asyncio.sleep(0.5)
 
         print("Clicking other_login")
-        while await self.findWait(Template.OTHER_LOGIN, max_tries=2):
-            await self.findClick(Template.OTHER_LOGIN, max_tries=1)
+        await self.safeFindClick(Template.OTHER_LOGIN)
 
         await self._enter_priority()
         print("Clicking email_signin")
-        while await self.findWait(Template.EMAIL_SIGNIN, max_tries=2):
-            await self.findClick(Template.EMAIL_SIGNIN, max_tries=1)
+        await self.safeFindClick(Template.EMAIL_SIGNIN)
 
         debug_update(acc_ind, "Logging")
         print(f"Typing email for index {acc_ind}")
@@ -580,16 +582,14 @@ class Window:
         await self._type(df.email[acc_ind])
 
         print("Clicking next_step")
-        while await self.findWait(Template.NEXT_STEP, max_tries=2):
-            await self.findClick(Template.NEXT_STEP, max_tries=1)
+        await self.safeFindClick(Template.NEXT_STEP)
 
         print(f"Typing password for index {acc_ind}")
         await asyncio.sleep(0.5)
         await self._type(df.password[acc_ind])
 
         print("Clicking login")
-        while await self.findWait(Template.LOGIN, max_tries=2):
-            await self.findClick(Template.LOGIN, max_tries=1)
+        await self.safeFindClick(Template.LOGIN)
 
         await asyncio.sleep(0.5)
 
@@ -683,8 +683,7 @@ class Window:
         while not await self.findWait(Template.ARTIFICIAL_ISLAND_ICON, max_tries=2):
             await self.findClick(Template.CASUAL_TAB, max_tries=1)
 
-        while await self.findWait(Template.ARTIFICIAL_ISLAND_ICON, max_tries=2):
-            await self.findClick(Template.ARTIFICIAL_ISLAND_ICON, max_tries=1)
+        await self.safeFindClick(Template.ARTIFICIAL_ISLAND_ICON)
 
         # await self._exit_priority()
 
@@ -719,23 +718,15 @@ class Window:
 
         # print("Clicking settings_button")
         # await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
-
-        while await self.findWait(
-            [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2], max_tries=2
-        ):
-            await self.findClick(
-                [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2], max_tries=1
-            )
+        await self.safeFindClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
 
         print("Clicking switch_acc_button")
-        while await self.findWait(Template.SWITCH_ACC_BUTTON, max_tries=2):
-            await self.findClick(Template.SWITCH_ACC_BUTTON, max_tries=1)
+        await self.safeFindClick(Template.SWITCH_ACC_BUTTON)
 
         await asyncio.sleep(1)
 
         print("Clicking switch_acc_text")
-        while await self.findWait(Template.SWITCH_ACC_TEXT, max_tries=2):
-            await self.findClick(Template.SWITCH_ACC_TEXT, max_tries=1)
+        await self.safeFindClick(Template.SWITCH_ACC_TEXT)
 
         status_update(acc_ind, "checked")
         debug_update(acc_ind, "")
