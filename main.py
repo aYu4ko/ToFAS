@@ -624,7 +624,7 @@ class Window:
 
         debug_update(acc_ind, "Logging")
         print(f"Typing email for index {acc_ind}")
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
         # Type email with priority (ensures it goes to the right textbox)
         await self._type(df.email[acc_ind])
 
@@ -632,13 +632,13 @@ class Window:
         await self.safeFindClick(Template.NEXT_STEP)
 
         print(f"Typing password for index {acc_ind}")
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
         await self._type(df.password[acc_ind])
 
         print("Clicking login")
         await self.safeFindClick(Template.LOGIN)
 
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.25)
 
         print("Clicking enter button to remove popup?")
         await self.findClick(Template.ENTER)
