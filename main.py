@@ -530,7 +530,10 @@ class Window:
         invert_threshold: bool = False,
         leniency: float = 0.0,
         max_tries: int = 100,
-        fallback_func: Callable[[], None] = lambda: print("Failed to find object"),
+        name: str = "object",
+        fallback_func: Callable[[], None] = lambda _id, _name: print(
+            f"[Win {_id}]: Failed to find {_name}"
+        ),
     ) -> tuple[np.ndarray, bool]:
         if not isinstance(img_list, list):
             img_list = [img_list]
@@ -558,16 +561,16 @@ class Window:
                 threshold -= leniency
 
             print(
-                f"DEBUG: max_val is {round(max_val, 5)} (thresh: {round(threshold, 5)})"
+                f"[Win {_id}]: max_val is {round(max_val, 5)} (thresh: {round(threshold, 5)})"
             )
             if max_val <= threshold:
                 tries += 1
                 if tries >= max_tries:
-                    fallback_func()
+                    fallback_func(self.id, name)
                     return max_loc, False
                 await asyncio.sleep(1.5)
 
-        print("DEBUG: ACCEPTED")
+        print(f"[Win {_id}]: Found {name}")
         return max_loc, True
 
     async def findClick(
