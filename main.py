@@ -561,7 +561,7 @@ class Window:
                 threshold -= leniency
 
             print(
-                f"[Win {_id}]: max_val is {round(max_val, 5)} (thresh: {round(threshold, 5)})"
+                f"[Win {self.id}]: max_val is {round(max_val, 5)} (thresh: {round(threshold, 5)})"
             )
             if max_val <= threshold:
                 tries += 1
@@ -570,7 +570,7 @@ class Window:
                     return max_loc, False
                 await asyncio.sleep(1.5)
 
-        print(f"[Win {_id}]: Found {name}")
+        print(f"[Win {self.id}]: Found {name}")
         return max_loc, True
 
     async def findClick(
