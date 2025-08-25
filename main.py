@@ -523,6 +523,53 @@ class Window:
         await input_scheduler.schedule(req)
         await req.event.wait()
 
+    async def find(
+        self,
+        img_list: list[np.ndarray] | np.ndarray,
+        threshold: float = 0.85,
+        invert_threshold: bool = False,
+        leniency: float = 0.0,
+        max_tries: int = 100,
+        fallback_func: Callable[[], None] = lambda: print("Failed to find object"),
+    ) -> tuple[np.ndarray, bool]:
+        if not isinstance(img_list, list):
+            img_list = [img_list]
+
+        threshold, max_val, tries = preassign(threshold, invert_threshold)
+
+        while max_val <= threshold:
+            ss_img = takeScreenshotDirect(self.size)
+
+            n = len(img_list)
+            _vals = [0.0] * n
+            _locs = [np.array([0, 0])] * n
+            for i in range(n):
+                result = cv2.matchTemplate(ss_img, img_list[i], cv2.TM_CCOEFF_NORMED)
+                _, _vals[i], _, _locs[i] = cv2.minMaxLoc(result)  # type: ignore
+
+            ind = _vals.index(max(_vals))
+            max_val = _vals[ind]
+            max_loc = _locs[ind]
+
+            if invert_threshold:
+                max_val = -max_val
+                threshold += leniency
+            else:
+                threshold -= leniency
+
+            print(
+                f"DEBUG: max_val is {round(max_val, 5)} (thresh: {round(threshold, 5)})"
+            )
+            if max_val <= threshold:
+                tries += 1
+                if tries >= max_tries:
+                    fallback_func()
+                    return max_loc, False
+                await asyncio.sleep(1.5)
+
+        print("DEBUG: ACCEPTED")
+        return max_loc, True
+
     async def findClick(
         self,
         img_list: list[np.ndarray] | np.ndarray,
@@ -641,12 +688,12 @@ class Window:
 
         if not await self.findClick(Template.UID_TEXT, max_tries=5):
             await self._click(
-                self.size0[0] + int(0.5 * self.w), self.size0[1] + int(0.9 * self.h)
+                self.size0[0] + int(0.8 * self.w), self.size0[1] + int(0.8 * self.h)
             )
 
         if not await self.findClick(Template.UID_TEXT, max_tries=5):
             await self._click(
-                self.size0[0] + int(0.5 * self.w), self.size0[1] + int(0.9 * self.h)
+                self.size0[0] + int(0.8 * self.w), self.size0[1] + int(0.8 * self.h)
             )
 
         await asyncio.sleep(0.5)
