@@ -578,8 +578,7 @@ class Window:
         leniency: float = 0,
         max_tries: int = 999,
     ) -> bool:
-        loc, val = await findElement(
-            self.size,
+        loc, val = await self.find(
             img_list,
             threshold=threshold,
             invert_threshold=invert_threshold,
@@ -589,8 +588,7 @@ class Window:
         if val:
             click_x, click_y = self.size0 + loc
             await self._click(click_x, click_y)
-            return True
-        return False
+        return val
 
     async def findWait(
         self,
@@ -599,8 +597,7 @@ class Window:
         invert_threshold: bool = False,
         max_tries: int = 999,
     ) -> bool:
-        _, val = await findElement(
-            self.size,
+        _, val = await self.find(
             img_list,
             threshold=threshold,
             invert_threshold=invert_threshold,
