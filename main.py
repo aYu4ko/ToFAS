@@ -568,7 +568,7 @@ class Window:
                 if tries >= max_tries:
                     fallback_func(self.id, name)
                     return max_loc, False
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(1.0)
 
         print(f"[Win {self.id}]: Found {name}")
         return max_loc, True
