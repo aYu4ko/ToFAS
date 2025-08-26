@@ -669,7 +669,7 @@ class Window:
                 name=srv,
             )
 
-        await self.findClick(Template.ENTER, name="enter")
+        await self.findClick(Template.ENTER, max_tries=2, name="enter")
 
         debug_update(acc_ind, "Entering Game")
         await self.findWait(Template.ORIGIN_RESO, max_tries=5, name="origin_reso")
