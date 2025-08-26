@@ -620,33 +620,26 @@ class Window:
     async def _do_login(self, acc_ind: int):
         # await asyncio.sleep(0.5)
 
-        print("Clicking other_login")
-        await self.safeFindClick(Template.OTHER_LOGIN)
+        await self.safeFindClick(Template.OTHER_LOGIN, name="other_login")
 
         await self._enter_priority()
-        print("Clicking email_signin")
-        await self.safeFindClick(Template.EMAIL_SIGNIN)
+        await self.safeFindClick(Template.EMAIL_SIGNIN, name="email_signin")
 
         debug_update(acc_ind, "Logging")
-        print(f"Typing email for index {acc_ind}")
         await asyncio.sleep(0.25)
-        # Type email with priority (ensures it goes to the right textbox)
         await self._type(df.email[acc_ind])
 
-        print("Clicking next_step")
-        await self.safeFindClick(Template.NEXT_STEP)
+        await self.safeFindClick(Template.NEXT_STEP, name="next_step")
 
-        print(f"Typing password for index {acc_ind}")
         await asyncio.sleep(0.25)
         await self._type(df.password[acc_ind])
 
-        print("Clicking login")
-        await self.safeFindClick(Template.LOGIN)
+        await self.safeFindClick(Template.LOGIN, name="login")
 
         await asyncio.sleep(0.25)
 
-        print("Clicking enter button to remove popup?")
-        await self.findClick(Template.ENTER)
+        # print("Clicking enter button to remove popup?")
+        await self.findClick(Template.ENTER, name="remove_popup")
 
         await self._exit_priority()
 
@@ -657,10 +650,10 @@ class Window:
             self.prev_server = srv
 
             debug_update(acc_ind, "Server Selection")
-            print("Clicking server_green_button")
-            await self.findClick(Template.SERVER_GREEN_BUTTON)
+            await self.findClick(
+                Template.SERVER_GREEN_BUTTON, name="server_green_button"
+            )
 
-            print("Clicking server")
             match srv:
                 case "aestral_noa":
                     srv_template = Template.SERVER_AESTRAL_NOA
@@ -669,51 +662,47 @@ class Window:
                 case _:
                     raise ValueError("")
 
-            print("Clicking the server")
             await self.findClick(
                 srv_template,
                 threshold=0.9,
                 max_tries=5,
+                name=srv,
             )
 
-        print("Clicking enter")
-        await self.findClick(Template.ENTER)
+        await self.findClick(Template.ENTER, name="enter")
 
         debug_update(acc_ind, "Entering Game")
-        print("Waiting for origin_reso to appear")
-        await self.findWait(Template.ORIGIN_RESO, max_tries=5)
+        await self.findWait(Template.ORIGIN_RESO, max_tries=5, name="origin_reso")
 
-        print("Waiting for origin_reso to disappear")
-        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=50)
+        await self.findWait(
+            Template.ORIGIN_RESO,
+            invert_threshold=True,
+            max_tries=50,
+            name="origin_reso_disappear",
+        )
         await asyncio.sleep(7)
 
     async def _do_remove_trash_ui(self):
-        print("Clicking uid_text")
         await asyncio.sleep(1.0)
 
-        if not await self.findClick(Template.UID_TEXT, max_tries=5):
+        if not await self.findClick(Template.UID_TEXT, max_tries=2, name="uid_text"):
             await self._click(
                 self.size0[0] + int(0.8 * self.w), self.size0[1] + int(0.8 * self.h)
             )
 
-        if not await self.findClick(Template.UID_TEXT, max_tries=5):
+        if not await self.findClick(Template.UID_TEXT, max_tries=2, name="uid_text_2"):
             await self._click(
                 self.size0[0] + int(0.8 * self.w), self.size0[1] + int(0.8 * self.h)
             )
 
         await asyncio.sleep(0.5)
 
-        print("Cancelling pass window, if exists")
-        await self.findClick(Template.PASS_CANCEL, max_tries=2)
+        await self.findClick(Template.PASS_CANCEL, max_tries=2, name="pass_cancel")
 
-        print("Clicking anywhere text")
-        await self.findClick(Template.ANYWHERE_TEXT, max_tries=2)
+        await self.findClick(Template.ANYWHERE_TEXT, max_tries=2, name="anywhere_text")
 
     async def _do_check_oldman(self, acc_ind: int):
-        print("Objective: Oldman")
         debug_update(acc_ind, "Checking Oldman")
-
-        print("Clicking sword_icon")
 
         await self._shortcut("alt", "3")
         # pyautogui.hotkey('alt', '3')
@@ -722,7 +711,9 @@ class Window:
         sword_icon_tries = 0
 
         while (
-            not await self.findClick(Template.CASUAL_TAB, max_tries=1)
+            not await self.findClick(
+                Template.CASUAL_TAB, max_tries=1, name="casual_tab"
+            )
             and sword_icon_tries <= 3
         ):
             print("Clicking casual_tab recursively")
@@ -731,32 +722,36 @@ class Window:
 
         # await self.findClick(Template.CASUAL_TAB)
 
-        print("Clicking artificial_island_icon")
-        while not await self.findWait(Template.ARTIFICIAL_ISLAND_ICON, max_tries=2):
-            await self.findClick(Template.CASUAL_TAB, max_tries=1)
+        while not await self.findWait(
+            Template.ARTIFICIAL_ISLAND_ICON, max_tries=2, name="artificial_island_icon"
+        ):
+            await self.findClick(Template.CASUAL_TAB, max_tries=1, name="casual_tab")
 
-        await self.safeFindClick(Template.ARTIFICIAL_ISLAND_ICON)
+        await self.safeFindClick(
+            Template.ARTIFICIAL_ISLAND_ICON, name="artificial_island_icon"
+        )
 
         # await self._exit_priority()
 
-        print("Waiting for oldman_icon")
-        await self.findWait(Template.OLDMAN_ICON, max_tries=3)
+        # await self.findWait(Template.OLDMAN_ICON, max_tries=3, name="oldman_icon")
 
         print("Waiting for oldman_icon (status check)")
-        oldman_status_ = await self.findWait(Template.OLDMAN_ICON, max_tries=2)
+        oldman_status_ = await self.findWait(
+            Template.OLDMAN_ICON, max_tries=3, name="oldman_icon"
+        )
 
         # await self._enter_priority()
 
-        print("DEBUG: oldman", oldman_status_)
+        # print("DEBUG: oldman", oldman_status_)
         oldman_update(acc_ind, "FOUND" if oldman_status_ else "not found")
 
-        print("Clicking back_button")
-        await self.findClick(Template.BACK_BUTTON, threshold=0.75, max_tries=2)
+        await self.findClick(
+            Template.BACK_BUTTON, threshold=0.75, max_tries=2, name="back_button"
+        )
 
-        print("Clicking back_button again")
-        await self.findClick(Template.BACK_BUTTON, threshold=0.75, max_tries=2)
-        # await asyncio.sleep(1)
-        # pass
+        await self.findClick(
+            Template.BACK_BUTTON, threshold=0.75, max_tries=2, name="back_button"
+        )
 
     async def _do_logout(self, acc_ind: int):
         # print("Clicking esc_button")
@@ -765,31 +760,34 @@ class Window:
         while not await self.findClick(
             [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2],
             max_tries=1,
+            name="settings_button",
         ):
             await self._press("esc")
 
         # print("Clicking settings_button")
         # await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
-        await self.safeFindClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
+        await self.safeFindClick(
+            [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2],
+            name="settings_button",
+        )
 
-        print("Clicking switch_acc_button")
-        await self.safeFindClick(Template.SWITCH_ACC_BUTTON)
+        await self.safeFindClick(Template.SWITCH_ACC_BUTTON, name="switch_acc_button")
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
 
-        print("Clicking switch_acc_text")
-        await self.safeFindClick(Template.SWITCH_ACC_TEXT)
+        await self.safeFindClick(Template.SWITCH_ACC_TEXT, name="switch_acc_text")
 
         status_update(acc_ind, "checked")
         debug_update(acc_ind, "")
 
-        # await self._exit_priority()
+        await self.findWait(Template.ORIGIN_RESO, max_tries=5, name="origin_reso")
 
-        print("Waiting for origin_reso to appear")
-        await self.findWait(Template.ORIGIN_RESO, max_tries=5)
-
-        print("Waiting for origin_reso to disappear")
-        await self.findWait(Template.ORIGIN_RESO, invert_threshold=True, max_tries=100)
+        await self.findWait(
+            Template.ORIGIN_RESO,
+            invert_threshold=True,
+            max_tries=100,
+            name="origin_reso_disappear",
+        )
         await asyncio.sleep(2)
 
     async def run_for_account(self, acc_ind: int):
