@@ -639,7 +639,8 @@ class Window:
         await asyncio.sleep(0.25)
 
         # print("Clicking enter button to remove popup?")
-        await self.findClick(Template.ENTER, name="remove_popup")
+        # await self.findClick(Template.ENTER, name="remove_popup")
+        await self.safeFindClick(Template.ENTER, name="remove_popup")
 
         await self._exit_priority()
 
