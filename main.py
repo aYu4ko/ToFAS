@@ -644,7 +644,7 @@ class Window:
 
         # print("Clicking enter button to remove popup?")
         # await self.findClick(Template.ENTER, name="remove_popup")
-        await self.safeFindClick(Template.ENTER, name="remove_popup")
+        await self.findClick(Template.ENTER, max_tries=3, name="remove_popup")
 
         await self._exit_priority()
 
@@ -674,8 +674,8 @@ class Window:
                 name=srv,
             )
 
-        await self.safeFindClick(Template.ENTER, name="enter")
-        # await self.findClick(Template.ENTER, max_tries=2, name="enter")
+        # await self.safeFindClick(Template.ENTER, name="enter")
+        await self.findClick(Template.ENTER, max_tries=3, name="enter")
 
         debug_update(acc_ind, "Entering Game")
         await self.findWait(Template.ORIGIN_RESO, max_tries=5, name="origin_reso")
