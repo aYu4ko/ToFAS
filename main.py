@@ -278,7 +278,11 @@ class InputRequest:
 
         match self.request_type:
             case RequestType.CLICK:
+                pyautogui.keyDown("alt")
+                sleep(FAST_PAUSE)
                 pyautogui.click(*self.args)
+                sleep(FAST_PAUSE)
+                pyautogui.keyUp("alt")
             case RequestType.KEY:
                 pyautogui.press(*self.args)
             case RequestType.TYPE:
