@@ -577,6 +577,7 @@ class Window:
         invert_threshold: bool = False,
         leniency: float = 0,
         max_tries: int = 999,
+        name: str = "object",
     ) -> bool:
         loc, val = await self.find(
             img_list,
@@ -584,6 +585,7 @@ class Window:
             invert_threshold=invert_threshold,
             leniency=leniency,
             max_tries=max_tries,
+            name=name,
         )
         if val:
             click_x, click_y = self.size0 + loc
@@ -596,18 +598,24 @@ class Window:
         threshold: float = 0.85,
         invert_threshold: bool = False,
         max_tries: int = 999,
+        name: str = "object",
     ) -> bool:
         _, val = await self.find(
             img_list,
             threshold=threshold,
             invert_threshold=invert_threshold,
             max_tries=max_tries,
+            name=name,
         )
         return val
 
-    async def safeFindClick(self, template: np.ndarray | list[np.ndarray]):
-        while await self.findWait(template, max_tries=2):
-            await self.findClick(template, max_tries=1)
+    async def safeFindClick(
+        self,
+        template: np.ndarray | list[np.ndarray],
+        name: str = "object",
+    ):
+        while await self.findWait(template, max_tries=2, name=name):
+            await self.findClick(template, max_tries=1, name=name)
 
     async def _do_login(self, acc_ind: int):
         # await asyncio.sleep(0.5)
