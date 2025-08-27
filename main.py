@@ -638,13 +638,13 @@ class Window:
         await asyncio.sleep(0.25)
         await self._type(df.password[acc_ind])
 
-        await self.safeFindClick(Template.LOGIN, name="login")
+        await self.findClick(Template.LOGIN, max_tries=3, name="login")
 
-        await asyncio.sleep(0.25)
+        await asyncio.sleep(0.50)
 
         # print("Clicking enter button to remove popup?")
         # await self.findClick(Template.ENTER, name="remove_popup")
-        await self.findClick(Template.ENTER, max_tries=3, name="remove_popup")
+        await self.findClick(Template.ENTER, max_tries=1, name="remove_popup")
 
         await self._exit_priority()
 
@@ -655,7 +655,7 @@ class Window:
             self.prev_server = srv
 
             debug_update(acc_ind, "Server Selection")
-            await self.findClick(
+            await self.safeFindClick(
                 Template.SERVER_GREEN_BUTTON, name="server_green_button"
             )
 
