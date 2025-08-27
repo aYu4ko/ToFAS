@@ -779,9 +779,10 @@ class Window:
 
         # print("Clicking settings_button")
         # await self.findClick([Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2])
-        await self.safeFindClick(
+        await self.findClick(
             [Template.SETTINGS_BUTTON, Template.SETTINGS_BUTTON_2],
             name="settings_button",
+            max_tries=2,
         )
 
         await self.safeFindClick(Template.SWITCH_ACC_BUTTON, name="switch_acc_button")
