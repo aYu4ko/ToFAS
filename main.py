@@ -618,8 +618,15 @@ class Window:
         template: np.ndarray | list[np.ndarray],
         name: str = "object",
     ):
-        while await self.findWait(template, max_tries=2, name=name):
-            await self.findClick(template, max_tries=1, name=name)
+        has_clicked = False
+        val = True
+
+        while val or not has_clicked:
+            loc, val = await self.find(template, max_tries=1, name=name)
+            if val:
+                click_x, click_y = self.size0 + loc
+                await self._click(click_x, click_y)
+                has_clicked = True
 
     async def _do_login(self, acc_ind: int):
         # await asyncio.sleep(0.5)
