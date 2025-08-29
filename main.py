@@ -622,7 +622,7 @@ class Window:
         val = True
 
         while val or not has_clicked:
-            loc, val = await self.find(template, max_tries=1, name=name)
+            loc, val = await self.find(template, max_tries=2, name=name)
             if val:
                 click_x, click_y = self.size0 + loc
                 await self._click(click_x, click_y)
