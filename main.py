@@ -698,7 +698,7 @@ class Window:
     async def _do_remove_trash_ui(self):
         await asyncio.sleep(1.0)
 
-        if not await self.findClick(Template.UID_TEXT, max_tries=2, name="uid_text"):
+        if not await self.findClick(Template.UID_TEXT, max_tries=10, name="uid_text"):
             await self._click(
                 self.size0[0] + int(0.8 * self.w), self.size0[1] + int(0.8 * self.h)
             )
