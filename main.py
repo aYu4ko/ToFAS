@@ -674,6 +674,9 @@ class Window:
                 case _:
                     raise ValueError("")
 
+            await asyncio.sleep(0.5)
+            # sometimes laggy and wont load quickly enough
+
             await self.findClick(
                 srv_template,
                 threshold=0.9,
