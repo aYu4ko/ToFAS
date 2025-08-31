@@ -681,8 +681,10 @@ class Window:
                 name=srv,
             )
 
-        # await self.safeFindClick(Template.ENTER, name="enter")
-        await self.findClick(Template.ENTER, max_tries=3, name="enter")
+        await self.safeFindClick(Template.ENTER, name="enter")
+        # sometimes, pressing the ENTER doesnt do anything when laggy
+
+        # await self.findClick(Template.ENTER, max_tries=3, name="enter")
 
         debug_update(acc_ind, "Entering Game")
         await self.findWait(Template.ORIGIN_RESO, max_tries=5, name="origin_reso")
