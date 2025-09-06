@@ -20,7 +20,7 @@ show_d = False
 dir_path = sys.path[0]
 
 date = datetime.now(ZoneInfo("Asia/Chongqing"))
-formatted_date = date.strftime("%d%b%Y")
+formatted_date = date.strftime("%Y-%m-%d")
 formatted_time = float(date.strftime("%H.%M"))
 thresh_factor = 0.95
 
@@ -33,16 +33,17 @@ creds = df[['ign']]
 n = len(creds)
 
 #flags
-oldman = True 
+oldman = False
 mia_kitchen_mission = True
 vitality_mission = True
-bygone_mission = False
+bygone_mission = True
 crew_donations = True
 login_rewards = True
 redeem_rewards = False
-claim_mail = False
+claim_mail = True
+weekly_shop = False
 
-redeem_code = '624star'
+redeem_code = 'whisper0828'
 
 # flags = [oldman,crew_donations,mia_kitchen_mission,vitality_mission,bygone_mission,
 #          login_rewards,redeem_rewards,claim_mail]
@@ -84,16 +85,16 @@ def daily_dono_update(i,value, col=3):
 def dimensional_trials_update(i,value, col=4):
     sheet.Cells(i+2, col).Value = value
 
-def oldman_update(i,value, col=5):
+def oldman_update(i,value, col=None):
     sheet.Cells(i+2, col).Value = value
 
-def supply_run_update(i,value, col=6):
+def supply_run_update(i,value, col=5):
     sheet.Cells(i+2, col).Value = value
     
-def supply_run_2_update(i,value, col=0):
+def supply_run_2_update(i,value, col=None):
     sheet.Cells(i+2, col).Value = value
 
-def debug_update(i,value, col=7):
+def debug_update(i,value, col=6):
     sheet.Cells(i+2, col).Value = value
 
 # ============ Screenshot & Detection ============
@@ -194,7 +195,7 @@ if __name__ == '__main__':
         creds['status'] = "not checked"
         creds['daily dono'] = ""
         creds['dimensional trials'] = ""
-        creds['oldman'] = ""
+        #creds['oldman'] = ""
         creds['supply run'] = ""
         # creds['supply run 2'] = ""
         creds['debug'] = ""
@@ -210,7 +211,7 @@ if __name__ == '__main__':
     print(df)
 
     excel.Visible = True
-    win2 = pw.getWindowsWithTitle(file_name+" - Excel")
+    win2 = pw.getWindowsWithTitle("Excel")
     excel_win = win2[0]
     excel_win.moveTo(0,490)
 
@@ -236,6 +237,7 @@ if __name__ == '__main__':
         return val
 
 
+    #images
 
     other_login = readImg('other_login')
     email_signin = readImg('email_signin')
@@ -288,8 +290,9 @@ if __name__ == '__main__':
 
     challenge_button = readImg('challenge_button')
     bygone_icon = readImg('bygone_icon')
-    same_level_button = readImg('same_level_button')
-    sneak_level_button = readImg('sneak_level_button')
+    current_level_button = readImg('current_level_button')
+    next_level_button = readImg('next_level_button')
+    level1_button = readImg('level1_button')
     initiating_transmission = readImg('initiating_transmission')
     skip_button = readImg('skip_button')
     exit_button = readImg('exit_button')
@@ -303,6 +306,8 @@ if __name__ == '__main__':
     supply_claim = readImg('supply_claim')
     final_supply_claim = readImg('final_supply_claim')
     all_rewards_collected = readImg('all_rewards_collected')
+    anni_claim_tab = readImg('anni_claim_tab')
+    anni_claim_button = readImg('anni_claim_button')
 
     mail_icon = readImg('mail_icon')
     mail_icon2 = readImg('mail_icon2')
@@ -314,6 +319,15 @@ if __name__ == '__main__':
     gift_code_block = readImg('gift_code_block')
     confirm_button = readImg('confirm_button')
     chat_close_button = readImg('chat_close_button')
+    
+    shop_icon = readImg('shop_icon')
+    aug_factor = readImg('aug_factor')
+    aug_box = readImg('aug_box')
+    synthesia_box = readImg('synthesia_box')
+    max_button = readImg('max_button')
+    purchase_button = readImg('purchase_button')
+    spacetime_store = readImg('spacetime_store')
+    adv_module = readImg('adv_module')
 
 
     try:
@@ -381,7 +395,7 @@ if __name__ == '__main__':
             findClick(anywhere_text,max_tries=2)
             
             
-            #pyautogui.press('tab') #Secret
+            pyautogui.press('tab') #Secret
             
             
             if login_rewards:
@@ -396,8 +410,8 @@ if __name__ == '__main__':
                 print("Clicking special_operation")
                 findClick(special_operation)
                 
-                print("Clicking summer_welfare")
-                findClick(summer_welfare)
+                # print("Clicking summer_welfare")
+                # findClick(summer_welfare)
                 
                 # print("Clicking supply_run")
                 # findClick(supply_run)
@@ -428,6 +442,13 @@ if __name__ == '__main__':
                 # else:
                 #     print("Not all rewards collected")
                 #     supply_run_2_update(i, 'Not Completed')
+                
+                
+                # print("Clicking Anni Claim Tab")
+                # findClick(anni_claim_tab, max_tries=2)
+                
+                # print("Clicking Anni Claim Button")
+                # findClick(anni_claim_button, max_tries=2)
                 
                 print("Clicking back_button")
                 findClick(back_button, max_tries=2,threshold=0.75)
@@ -464,201 +485,269 @@ if __name__ == '__main__':
                 findClick(back_button,threshold=0.75)
                 sleep(1)
                  
+            if True:
+                if bygone_mission:
+                    print("Objective: Bygone Phantasm")
+                    debug_update(i, 'Bygone Mission')
+                    print("Pressing Enter")
+                    pyautogui.press('enter')
+                    print("Clicking sword_icon")
+                    pyautogui.keyDown('alt')
+                    pyautogui.press('3')
+                    pyautogui.keyUp('alt')
+                    # pyautogui.hotkey('alt', '3')
+                    # findClick(sword_icon,threshold=0.75)
 
-            if bygone_mission:
-                print("Objective: Bygone Phantasm")
-                debug_update(i, 'Bygone Mission')
-                print("Pressing Enter")
-                pyautogui.press('enter')
-                print("Clicking sword_icon")
-                pyautogui.keyDown('alt')
-                pyautogui.press('3')
-                pyautogui.keyUp('alt')
-                # pyautogui.hotkey('alt', '3')
-                # findClick(sword_icon,threshold=0.75)
+                    print("Clicking challenge_button")
+                    findClick(challenge_button)
 
-                print("Clicking challenge_button")
-                findClick(challenge_button)
+                    print("Clicking bygone_icon")
+                    findClick(bygone_icon)
 
-                print("Clicking bygone_icon")
-                findClick(bygone_icon)
+                    print("Clicking sneak level_button")
+                    findClick([next_level_button,level1_button],threshold=0.7)
 
-                print("Clicking sneak level_button")
-                findClick(sneak_level_button,threshold=0.7)
+                    print("Waiting for initiating_transmission to appear")
+                    findWait(initiating_transmission)
 
-                print("Waiting for initiating_transmission to appear")
-                findWait(initiating_transmission)
+                    print("Waiting for initiating_transmission to disappear")
+                    findWait(initiating_transmission, invert_threshold=True, max_tries=50)
 
-                print("Waiting for initiating_transmission to disappear")
-                findWait(initiating_transmission, invert_threshold=True, max_tries=50)
+                    print("Waiting for origin_reso to appear")
+                    findWait(origin_reso, max_tries=5)
 
-                print("Waiting for origin_reso to appear")
-                findWait(origin_reso, max_tries=5)
+                    print("Waiting for origin_reso to disappear")
+                    findWait(origin_reso, invert_threshold=True, max_tries=50)
 
-                print("Waiting for origin_reso to disappear")
-                findWait(origin_reso, invert_threshold=True, max_tries=50)
+                    print("Clicking skip_button")
+                    findClick(skip_button,max_tries=10)
+                    sleep(1.0)
 
-                print("Clicking skip_button")
-                findClick(skip_button,max_tries=10)
+                    print("Waiting for exit_button to appear")
+                    findWait(exit_button)
 
-                print("Waiting for exit_button to appear")
-                findWait(exit_button)
+                    print("Pressing ESC key")
+                    pyautogui.press('esc')
 
-                print("Pressing ESC key")
-                pyautogui.press('esc')
+                    print("Clicking exit_button")
+                    findClick(exit_button)
 
-                print("Clicking exit_button")
-                findClick(exit_button)
+                    print("Clicking ok_button")
+                    findClick(ok_button)
 
-                print("Clicking ok_button")
-                findClick(ok_button)
+                    print("Sleeping for 7 seconds")
+                    sleep(7)
+                    
+                    findWait(uid_text)
+                    sleep(1)
 
-                print("Sleeping for 7 seconds")
-                sleep(7)
+                # findWait(sword_icon,threshold=0.75)
+                # print("Clicking recommended_button")
+                # findClick(recommended_button,threshold=0.75)
+
+
+                if redeem_rewards:
+                    print("Clicking gift box icon")
+                    pyautogui.keyDown('alt')
+                    pyautogui.press('1')
+                    pyautogui.keyUp('alt')
+
+                    print("Clicking rewards button")
+                    findClick(rewards_button)
+                    
+                    print("Clicking exchange button")
+                    findClick(exchange_button)
+                    
+                    print("Clicking gift code block")
+                    findClick(gift_code_block)
+                    
+                    print("Writing redeem code")
+                    pyautogui.write(redeem_code)
+                    
+                    print("Clicking confirm button")
+                    findClick(confirm_button)
+                    
+                    print("Clicking back button")
+                    findClick(back_button)
+
+
+                if mia_kitchen_mission:
+                    
+                    print("Objective: Mia's Kitchen")
+                    debug_update(i, 'Mia Kitchen Mission')
+                    
+                    print("Clicking sword_icon")
+                    pyautogui.keyDown('alt')
+                    pyautogui.press('3')
+                    pyautogui.keyUp('alt')
+                    
+                    print("Clicking recommended button")
+                    findClick(recommended_button,threshold=0.75)
+
+                    print("Waiting for mia_kitchen_done_icon")
+                    while findWait(mia_kitchen_icon,max_tries=2) == 'FOUND':
+                        print("mia_kitchen_done_icon not found, retrying...")
+                        print("Clicking mia_kitchen_icon")
+                        findClick(mia_kitchen_icon)
+
+                        print("Clicking taste_button")
+                        findClick(taste_button)
+
+                        print("Clicking back_button")
+                        findClick(back_button,threshold=0.75)
+                        sleep(2)
+
+                        findWait(congratulations_text)
+                        findClick(anywhere_text)
+                        
+                    print("Clicking back_button")
+                    findClick(back_button,threshold=0.75)
+                    
+                if vitality_mission:
                 
-                findWait(uid_text)
-                sleep(1)
+                    print("Vitality mission active")
+                    debug_update(i, 'Vitality Mission')
+                    
+                    print("Clicking sword_icon")
+                    pyautogui.keyDown('alt')
+                    pyautogui.press('3')
+                    pyautogui.keyUp('alt')
+                    
+                    print("Clicking recommended button")
+                    findClick(recommended_button,threshold=0.75)
+                    
+                    print("Clicking dimensinal_trials_button")
+                    findClick(dimensinal_trials_button,threshold=0.75)
 
-            # findWait(sword_icon,threshold=0.75)
-            # print("Clicking recommended_button")
-            # findClick(recommended_button,threshold=0.75)
+                    print("Clicking gold_drill_button")
+                    findClick(gold_drill_button)
 
+                    print("Clicking go_button")
+                    findClick(go_button)
 
-            if redeem_rewards:
-                print("Clicking gift box icon")
-                pyautogui.keyDown('alt')
-                pyautogui.press('1')
-                pyautogui.keyUp('alt')
+                    print("Waiting for quick_battle_button")
+                    if findWait(quick_battle_button,max_tries=2) == 'FOUND':
+                        print("Clicking quick_battle_button")
+                        findClick(quick_battle_button)
 
-                print("Clicking rewards button")
-                findClick(rewards_button)
-                
-                print("Clicking exchange button")
-                findClick(exchange_button)
-                
-                print("Clicking gift code block")
-                findClick(gift_code_block)
-                
-                print("Writing redeem code")
-                pyautogui.write(redeem_code)
-                
-                print("Clicking confirm button")
-                findClick(confirm_button)
-                
-                print("Clicking back button")
-                findClick(back_button)
+                    print("Checking for operation_success_text")
+                    if findWait(operation_success_text,max_tries=2) == 'FOUND':
+                        print("Operation success found — marking as completed")
+                        dimensional_trials_update(i, 'Completed')
+                    else:
+                        print("Operation success not found — still marking as completed")
+                        dimensional_trials_update(i, 'Not Completed')
 
+                    print("Clicking anywhere_text")
+                    findClick(anywhere_text)
 
-            if mia_kitchen_mission:
-                
-                print("Objective: Mia's Kitchen")
-                debug_update(i, 'Mia Kitchen Mission')
-                
-                print("Clicking sword_icon")
-                pyautogui.keyDown('alt')
-                pyautogui.press('3')
-                pyautogui.keyUp('alt')
-                
-                print("Clicking recommended button")
-                findClick(recommended_button)
-
-                print("Waiting for mia_kitchen_done_icon")
-                while findWait(mia_kitchen_icon,max_tries=2) == 'FOUND':
-                    print("mia_kitchen_done_icon not found, retrying...")
-                    print("Clicking mia_kitchen_icon")
-                    findClick(mia_kitchen_icon)
-
-                    print("Clicking taste_button")
-                    findClick(taste_button)
+                    print("Clicking cross_button")
+                    findClick(cross_button,threshold=0.8)
 
                     print("Clicking back_button")
                     findClick(back_button,threshold=0.75)
-                    sleep(2)
 
-                    findWait(congratulations_text)
-                    findClick(anywhere_text)
+                    print("Clicking back_button")
+                    findClick(back_button,max_tries=2,threshold=0.75)
+                
+            if i<21:
+                if weekly_shop:
                     
-                print("Clicking back_button")
-                findClick(back_button,threshold=0.75)
+                    print("Weekly Shop mission active")
+                    
+                    print("Clicking sword_icon")
+                    pyautogui.keyDown('alt')
+                    pyautogui.press('3')
+                    pyautogui.keyUp('alt')
+                    
+                    print("Clicking shop icon")
+                    findClick(shop_icon)
+                    
+                    if i<12:
+                        print("Clicking Synthesia box")
+                        findClick(synthesia_box,max_tries=2)
+                        if findWait(synthesia_box,max_tries=2)=='FOUND':
+                            print("Clicking max button")
+                            findClick(max_button,max_tries=2)
+                            print("Click Purchase button")
+                            findClick(purchase_button,max_tries=2)
+                            print("Clicking OK button")
+                            findClick(ok_button,max_tries=2)
+                            sleep(0.5)
+
+                    print("Clicking Aug Factor")
+                    findClick(aug_factor,max_tries=2)
+                    if findWait(aug_factor,max_tries=2)=='FOUND':
+                        print("Clicking max button")
+                        findClick(max_button,max_tries=2)
+                        print("Click Purchase button")
+                        findClick(purchase_button,max_tries=2)
+                        print("Clicking OK button")
+                        findClick(ok_button,max_tries=2)
+                        sleep(0.5)
+                    
+                    print("Clicking Aug box")
+                    findClick(aug_box,max_tries=2)
+                    if findWait(aug_box,max_tries=2)=='FOUND':
+                        print("Clicking max button")
+                        findClick(max_button,max_tries=2)
+                        print("Click Purchase button")
+                        findClick(purchase_button,max_tries=2)
+                        print("Clicking OK button")
+                        findClick(ok_button,max_tries=2)
+                        sleep(0.5)
+                    
+                    print("CLicking Spacetime store button")
+                    findClick(spacetime_store)
+                    print("Clicking Adv module")
+                    findClick(adv_module,max_tries=2)
+                    print("Clicking max button")
+                    if findWait(adv_module,max_tries=2)=='FOUND':
+                        findClick(max_button,max_tries=2)
+                        print("Click Purchase button")
+                        findClick(purchase_button,max_tries=2)
+                        print("Clicking OK button")
+                        findClick(ok_button,max_tries=2)
+                        sleep(0.5)
+                    
+                    print("Clicking esc")
+                    pyautogui.press('esc')
+                    pyautogui.press('esc')
+                    
+
+            if True:#i<15:
+                if claim_mail:
+                
+                    debug_update(i,"claim mail")
+                    
+                    print("Closing chat")
+                    findClick(chat_close_button,max_tries=2)
+                    sleep(0.5)
+                    
+                    print("Press Escape key")
+                    pyautogui.press('esc')
+                    
+                    print("Clicking mail icon")
+                    findClick([mail_icon,mail_icon2],threshold=0.75)
+                    
+                    print("Clicking claim all button")
+                    findClick(claim_all_button)
+                    
+                    sleep(1.0)  # safer with delay
+                    
+                    print("Click anywhere text")
+                    findClick(anywhere_text,max_tries=2)
+                    
+                    print("Clicking delete all button")
+                    findClick(delete_all_button)
+                    
+                    print("Clicking OK button")
+                    findClick(ok_button,max_tries=2)
+                    
+                    print("Clicking back button")
+                    findClick(back_button)
 
 
-            if claim_mail:
-                
-                debug_update(i,"claim mail")
-                
-                print("Closing chat")
-                findClick(chat_close_button,max_tries=2)
-                sleep(0.5)
-                
-                print("Press Escape key")
-                pyautogui.press('esc')
-                
-                print("Clicking mail icon")
-                findClick([mail_icon,mail_icon2],threshold=0.75)
-                
-                print("Clicking claim all button")
-                findClick(claim_all_button)
-                
-                sleep(1.0)  # safer with delay
-                
-                print("Click anywhere text")
-                findClick(anywhere_text,max_tries=2)
-                
-                print("Clicking delete all button")
-                findClick(delete_all_button)
-                
-                print("Clicking OK button")
-                findClick(ok_button,max_tries=2)
-                
-                print("Clicking back button")
-                findClick(back_button)
-
-            if vitality_mission:
-                
-                print("Vitality mission active")
-                debug_update(i, 'Vitality Mission')
-                
-                print("Clicking sword_icon")
-                pyautogui.keyDown('alt')
-                pyautogui.press('3')
-                pyautogui.keyUp('alt')
-                
-                print("Clicking recommended button")
-                findClick(recommended_button)
-                
-                print("Clicking dimensinal_trials_button")
-                findClick(dimensinal_trials_button,threshold=0.75)
-
-                print("Clicking gold_drill_button")
-                findClick(gold_drill_button)
-
-                print("Clicking go_button")
-                findClick(go_button)
-
-                print("Waiting for quick_battle_button")
-                if findWait(quick_battle_button,max_tries=2) == 'FOUND':
-                    print("Clicking quick_battle_button")
-                    findClick(quick_battle_button)
-
-                print("Checking for operation_success_text")
-                if findWait(operation_success_text,max_tries=2) == 'FOUND':
-                    print("Operation success found — marking as completed")
-                    dimensional_trials_update(i, 'Completed')
-                else:
-                    print("Operation success not found — still marking as completed")
-                    dimensional_trials_update(i, 'Not Completed')
-
-                print("Clicking anywhere_text")
-                findClick(anywhere_text)
-
-                print("Clicking cross_button")
-                findClick(cross_button,threshold=0.8)
-
-                print("Clicking back_button")
-                findClick(back_button,threshold=0.75)
-
-                print("Clicking back_button")
-                findClick(back_button,max_tries=2,threshold=0.75)
                 
                 
             if crew_donations:
