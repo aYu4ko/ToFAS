@@ -1,1 +1,1 @@
-Automation script for most of ToF
+Automation script for various tasks in 'Tower of Fantasy' game.
